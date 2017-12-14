@@ -43,6 +43,7 @@
 #              28) Klaus Homeister http://u88.n24.queensu.ca/exiftool/forum/index.php/topic,4803.0.html
 #              29) Louis Granboulan private communication (K-5II)
 #              30) http://u88.n24.queensu.ca/exiftool/forum/index.php?topic=5433
+#              31) Andras Salamon private communication (K-70)
 #              IB) Iliah Borg private communication (LibRaw)
 #              JD) Jens Duttke private communication
 #              NJ) Niels Kristian Bech Jensen private communication
@@ -58,7 +59,7 @@ use Image::ExifTool::Exif;
 use Image::ExifTool::GPS;
 use Image::ExifTool::HP;
 
-$VERSION = '3.08';
+$VERSION = '3.20';
 
 sub CryptShutterCount($$);
 sub PrintFilter($$$);
@@ -178,7 +179,8 @@ sub DecodeAFPoints($$$$;$);
     '4 2' => 'smc PENTAX-FA 80-320mm F4.5-5.6',
     '4 3' => 'smc PENTAX-FA 43mm F1.9 Limited',
     '4 6' => 'smc PENTAX-FA 35-80mm F4-5.6',
-    '4 10' => 'Irix 15mm F2.4', #forum3833
+    '4 9' => 'Irix 11mm F4 Firefly', #27
+    '4 10' => 'Irix 15mm F2.4', #27
     '4 12' => 'smc PENTAX-FA 50mm F1.4', #17
     '4 15' => 'smc PENTAX-FA 28-105mm F4-5.6 [IF]',
     '4 16' => 'Tamron AF 80-210mm F4-5.6 (178D)', #13
@@ -325,6 +327,7 @@ sub DecodeAFPoints($$$$;$);
     '8 30' => 'Sigma 17-70mm F2.8-4 DC Macro HSM | C', #27
     '8 31' => 'Sigma 18-35mm F1.8 DC HSM', #27
     '8 32' => 'Sigma 30mm F1.4 DC HSM | A', #27
+    '8 33' => 'Sigma 18-200mm F3.5-6.3 DC Macro HSM', #DieterPearcey (C014)
     '8 34' => 'Sigma 18-300mm F3.5-6.3 DC Macro HSM', #NJ
     '8 59' => 'HD PENTAX-D FA 150-450mm F4.5-5.6 ED DC AW', #29
     '8 60' => 'HD PENTAX-D FA* 70-200mm F2.8 ED DC AW', #29
@@ -377,8 +380,7 @@ sub DecodeAFPoints($$$$;$);
     '13 19' => 'smc PENTAX-D FA 645 25mm F4 AL [IF] SDM AW', #PH
     '13 20' => 'HD PENTAX-D FA 645 90mm F2.8 ED AW SR', #PH
     '13 253' => 'HD PENTAX-DA 645 28-45mm F4.5 ED AW SR', #Dominique Schrekling email
-    # missing:
-    # 'smc PENTAX-DA 645 25mm F4.0 AL SDM AW [IF]' ? different than D FA version?
+    '13 254' => 'smc PENTAX-DA 645 25mm F4 AL [IF] SDM AW', #forum8253
 #
 # Q-mount lenses (21=auto focus lens, 22=manual focus)
 #
@@ -532,6 +534,7 @@ my %pentaxModelID = (
     0x1309c => 'K-3 II', #29 (Ricoh)
     0x131f0 => 'WG-M2', # (Ricoh)
     0x13222 => 'K-70', #29 (Ricoh)
+    0x1322c => 'KP', #29 (Ricoh)
 );
 
 # Pentax city codes - (PH, Optio WP)
@@ -648,6 +651,9 @@ my %digitalFilter = (
         20 => 'Shading', # (Q)
         21 => 'Invert Color', # (Q)
         23 => 'Tone Expansion', #Forum5247
+        27 => 'Unicolor Bold', #31
+        28 => 'Bold Monochrome', #31
+        29 => 'Replace Color', #31
         254 => 'Custom Filter',
     },
 );
@@ -665,8 +671,8 @@ my %filterSettings = (
     8  => ['HighContrast', '%d'],   # High Contrast/Custom (1-5)
     9  => ['Color',         { 1=>'Red',2=>'Magenta',3=>'Blue',4=>'Cyan',5=>'Green',6=>'Yellow' }], # Color Filter
     10 => ['Density',       { 1=>'Light',2=>'Standard',3=>'Dark' }], # Color Filter
-    11 => ['ExtractedColor',{ 0=>'Off',1=>'Red',2=>'Magenta',3=>'Blue',4=>'Cyan',5=>'Green',6=>'Yellow' }], # ExtractColor [x2]
-    12 => ['ColorRange', '%+d'],    # ExtractColor [x2] (-2-+2)
+    11 => ['ExtractedColor',{ 0=>'Off',1=>'Red',2=>'Magenta',3=>'Blue',4=>'Cyan',5=>'Green',6=>'Yellow' }], # Extract Color [x2]
+    12 => ['ColorRange', '%+d'],    # Extract Color [x2] (-2-+2)
     13 => ['FilterEffect',  { 0=>'Off',1=>'Red',2=>'Green',3=>'Blue',4=>'Infrared'}], # Monochrome
     14 => ['ToningBA', '%+d'],      # Monochrome (-3-+3)
     15 => ['InvertColor',   { 0=>'Off',1=>'On' }], # Custom/Invert Color
@@ -698,6 +704,12 @@ my %filterSettings = (
     41 => ['Contrast2',     { 1=>'Low',2=>'Medium',3=>'High'}], # Sketch Filter
     42 => ['ScratchEffect', { 0=>'Off',1=>'On' }], # Sketch Filter
     45 => ['ToneExpansion', { 1=>'Low',2=>'Medium',3=>'High' }], # Tone Expansion (ref Forum5247)
+    47 => ['UnicolorBold',  { 1=>'Red',2=>'Magenta',3=>'Blue',4=>'Cyan',5=>'Green',6=>'Yellow' }], #31 Unicolor Bold
+    48 => ['BoldMonochrome', '%d'], #31 Bold Monochrome (1-3)
+    49 => ['OriginalColor', { 1=>'Red',2=>'Magenta',3=>'Blue',4=>'Cyan',5=>'Green',6=>'Yellow' }], #31 Replace Color
+    50 => ['NewColor',      { 1=>'Red',2=>'Magenta',3=>'Blue',4=>'Cyan',5=>'Green',6=>'Yellow' }], #31 Replace Color
+    51 => ['ColorScale', '%d'], #31 Replace Color (1-5)
+    52 => ['Toning2', '%+d'], #31 Extract Color (-3-+3)
 );
 
 # decoding for Pentax Firmware ID tags - PH
@@ -805,6 +817,7 @@ my %binaryDataAttrs = (
         # 0.1.0.3 - PENTAX Optio E40
         # 3.0.0.0 - K10D
         # 3.1.0.0 - Optio A40/S10/L36/L40/M40/V10
+        # 3.1.1.0 - Optio L36/L40/M40/V10
         # 3.1.2.0 - Optio Z10
         # 4.0.2.0 - Optio E50
         # 4.1.0.0 - Optio S12
@@ -816,17 +829,17 @@ my %binaryDataAttrs = (
         # 4.2.3.0 - Optio M60
         # 4.4.0.1 - K-m, K2000
         # 4.5.0.0 - Optio E70/L70
-        # 4.5.0.0 - Optio P70
+        # 4.5.0.0 - Optio E70/L70/P70
         # 4.6.0.0 - Optio E80/E90/W80
         # 5.0.0.0 - K-7, Optio P80/WS80
         # 5.1.0.0 - K-x
         # 5.2.0.0 - Optio I-10
         # 5.3.0.0 - Optio H90
-        # 5.3.2.0 - Optio W90
+        # 5.3.2.0 - Optio W90/X90
         # 6.0.0.0 - K-r, 645D
         # 6.1.3.0 - Optio LS1000/RS1000/RS1500/RZ10
         # 7.0.0.0 - K-5
-        # 7.1.0.0 - Optio WG-1GPS/WG-10
+        # 7.1.0.0 - Optio WG-1GPS/WG-10/WG-20
         # 7.2.0.0 - Optio S1
         # 8.0.0.0 - Q
         # 8.0.1.0 - Optio RZ18
@@ -834,17 +847,21 @@ my %binaryDataAttrs = (
         # 8.1.0.0 - Optio LS465/WG-2GPS
         # 9.0.0.0 - K-01
         # 9.1.2.0 - X-5
-        # 10.0.0.0 - K-30, K-50, K-500, K-5 II
+        # 10.0.0.0 - K-30, K-50, K-500, K-5 II, K-5 II s
         # 10.0.2.0 - Q10
-        # 10.2.0.0 - WG-3
+        # 10.2.0.0 - WG-3/WG-4
         # 10.2.1.0 - MX-1
-        # 10.4.1.0 - WG-3 GPS
+        # 10.4.1.0 - WG-3/4/5 GPS, WG-30/30W
         # 10.6.1.0 - Q-S1, Q7
         # 11.0.0.0 - K-3
         # 11.2.1.0 - 645Z
         # 11.3.0.0 - K-S1
         # 11.5.0.0 - K-S2
         # 11.6.1.0 - K-3 II
+        # 11.7.5.0 - WG-M2
+        # 12.0.0.0 - K-1
+        # 12.1.3.0 - K-70
+        # 12.1.5.0 - KP
     },
     0x0001 => { #PH
         Name => 'PentaxModelType',
@@ -1431,6 +1448,12 @@ my %binaryDataAttrs = (
             37 => 128000, #PH (NC)
             38 => 160000, #PH (NC)
             39 => 204800, #27
+            40 => 256000, #PH (NC)
+            41 => 320000, #PH (NC)
+            42 => 409600, #PH (NC)
+            43 => 512000, #PH (NC)
+            44 => 640000, #PH (NC)
+            45 => 819200, #PH (KP)
             # Optio 330/430 (oddball)
             50 => 50, #PH
             100 => 100, #PH
@@ -1461,8 +1484,16 @@ my %binaryDataAttrs = (
             276 => 25600, #PH
             277 => 36000, #PH
             278 => 51200, #PH
-            # 65534 Auto? (Q/Q10/Q7 MOV) PH
-            # 65535 Auto? (K-01 MP4) PH
+            279 => 72000, #PH (NC)
+            280 => 102400, #PH (NC)
+            281 => 144000, #PH (NC)
+            282 => 204800, #PH (NC)
+            283 => 288000, #PH (NC)
+            284 => 409600, #PH (NC)
+            285 => 576000, #PH (NC)
+            286 => 819200, #PH (NC)
+            65534 => 'Auto 2', #PH (Q/Q10/Q7 MOV) [how is this different from 65535?]
+            65535 => 'Auto', #PH/31 (K-01/K-70 MP4)
         },
     },
     0x0015 => { #PH
@@ -1475,14 +1506,28 @@ my %binaryDataAttrs = (
             approximate Light Value.  May not be valid for some models, eg. Optio S
         },
     },
-    0x0016 => { #PH
+    0x0016 => [{ #PH
         Name => 'ExposureCompensation',
+        Condition => '$count == 1',
+        Notes => q{
+            some models write two values here.  The second value is meaning of the
+            second value is not yet known
+        },
         Writable => 'int16u',
         ValueConv => '($val - 50) / 10',
         ValueConvInv => 'int($val * 10 + 50.5)',
         PrintConv => '$val ? sprintf("%+.1f", $val) : 0',
         PrintConvInv => 'Image::ExifTool::Exif::ConvertFraction($val)',
-    },
+    },{
+        Name => 'ExposureCompensation',
+        Writable => 'int16u',
+        # (2 values for K-70, etc -- have only seen "0" for the 2nd value - PH)
+        Count => 2,
+        ValueConv => '$val =~ s/ .*//; ($val - 50) / 10',
+        ValueConvInv => 'int($val * 10 + 50.5) . " 0"',
+        PrintConv => '$val ? sprintf("%+.1f", $val) : 0',
+        PrintConvInv => 'Image::ExifTool::Exif::ConvertFraction($val)',
+    }],
     0x0017 => { #3
         Name => 'MeteringMode',
         Writable => 'int16u',
@@ -1634,8 +1679,8 @@ my %binaryDataAttrs = (
             0 => '-2 (low)', #PH
             1 => '0 (normal)', #PH
             2 => '+2 (high)', #PH
-            3 => '-1 (med low)', #2
-            4 => '+1 (med high)', #2
+            3 => '-1 (medium low)', #2
+            4 => '+1 (medium high)', #2
             5 => '-3 (very low)', #PH
             6 => '+3 (very high)', #PH (NC)
             7 => '-4 (minimum)', #PH (NC)
@@ -1653,8 +1698,8 @@ my %binaryDataAttrs = (
             0 => '-2 (low)', #PH
             1 => '0 (normal)', #PH
             2 => '+2 (high)', #PH
-            3 => '-1 (med low)', #2
-            4 => '+1 (med high)', #2
+            3 => '-1 (medium low)', #2
+            4 => '+1 (medium high)', #2
             5 => '-3 (very low)', #PH
             6 => '+3 (very high)', #PH (NC)
             7 => '-4 (minimum)', #PH (NC)
@@ -1672,8 +1717,8 @@ my %binaryDataAttrs = (
             0 => '-2 (soft)', #PH
             1 => '0 (normal)', #PH
             2 => '+2 (hard)', #PH
-            3 => '-1 (med soft)', #2
-            4 => '+1 (med hard)', #2
+            3 => '-1 (medium soft)', #2
+            4 => '+1 (medium hard)', #2
             5 => '-3 (very soft)', #(NC)
             6 => '+3 (very hard)', #(NC)
             7 => '-4 (minimum)', #PH (NC)
@@ -1845,8 +1890,13 @@ my %binaryDataAttrs = (
             '18 3' => 'Auto Program (MTF)', #PH (NC)
             '18 22' => 'Auto Program (Shallow DOF)', #PH (NC)
             '20 22' => 'Blur Control', #PH (Q)
-            '254 0' => 'Video', #PH (K-7,K-5)
-            '255 0' => 'Video (Auto Aperture)', #PH (K-5)
+            '249 0' => 'Movie (TAv)', #31
+            '250 0' => 'Movie (TAv, Auto Aperture)', #31
+            '251 0' => 'Movie (Manual)', #31
+            '252 0' => 'Movie (Manual, Auto Aperture)', #31
+            '253 0' => 'Movie (Av)', #31
+            '254 0' => 'Movie (Av, Auto Aperture)', #31
+            '255 0' => 'Movie (P, Auto Aperture)', #31
             '255 4' => 'Video (4)', #PH (K-x,K-01)
         },{
             # EV step size (ref 19)
@@ -1880,12 +1930,20 @@ my %binaryDataAttrs = (
         },{
             0x00 => 'Single Exposure',
             0x01 => 'Multiple Exposure',
+            0x02 => 'Composite Average', #31
+            0x03 => 'Composite Additive', #31
+            0x04 => 'Composite Bright', #31
+            0x08 => 'Interval Shooting', #31
+            0x0a => 'Interval Composite Average', #31
+            0x0b => 'Interval Composite Additive', #31
+            0x0c => 'Interval Composite Bright', #31
             0x0f => 'Interval Movie', #PH (K-01)
             0x10 => 'HDR', #PH (645D)
             0x20 => 'HDR Strong 1', #PH (NC) (K-5)
             0x30 => 'HDR Strong 2', #PH (K-5)
             0x40 => 'HDR Strong 3', #PH (K-5)
-            0xe0 => 'HDR Auto', #PH (K-5)
+            0x50 => 'HDR Manual', #31 (K-70 HDR 1 and HDR 2)
+            0xe0 => 'HDR Auto', #PH (K-5, K-70)
             0xff => 'Video', #PH (K-x)
         }],
     },
@@ -2039,6 +2097,8 @@ my %binaryDataAttrs = (
             7 => 'Reversal Film', # (645D) (Ricoh WG-5 "Slide Film")
             8 => 'Bleach Bypass', # (K-5)
             9 => 'Radiant', # (Q)
+            10 => 'Cross Processing', #31 (K-70)
+            11 => 'Flat', #31 (K-70)
         },
     },
     0x0050 => { #PH
@@ -2114,14 +2174,15 @@ my %binaryDataAttrs = (
             7 => '7 (K-r)',
             8 => '8 (K-5,K-5II,K-5IIs)',
             9 => '9 (Q)',
-            10 => '10 (K-01,K-30)',
+            10 => '10 (K-01,K-30,K-50,K-500)',
             11 => '11 (Q10)',
-            12 => '12 (MX-1)',
+            12 => '12 (MX-1,Q-S1,Q7)',
             13 => '13 (K-3,K-3II)',
             14 => '14 (645Z)',
             15 => '15 (K-S1,K-S2)', #PH
             16 => '16 (K-1)', #PH
             17 => '17 (K-70)', #29
+            18 => '18 (KP)', #PH
         },
     },
     0x0067 => { #PH (K-5)
@@ -2386,7 +2447,8 @@ my %binaryDataAttrs = (
         Writable => 'int16u',
         PrintConvColumns => 2,
         PrintConv => {
-            65535 => 'Off',
+            65535 => 'n/a', #31
+            0 => 'Off', #31
             1 => 'Green',
             2 => 'Yellow',
             3 => 'Orange',
@@ -2462,6 +2524,53 @@ my %binaryDataAttrs = (
         Name => 'ISO',
         Priority => 0,
         Writable => 'int32u',
+    },
+    0x0092 => { #31
+        Name => 'IntervalShooting',
+        Notes => '2 numbers: 1. Shot number 2. Total number of shots',
+        Writable => 'int16u',
+        Count => 2,
+        PrintConv => {
+            '0 0' => 'Off',
+            OTHER => sub {
+                my ($val, $inv) = @_;
+                if ($inv) {
+                    $val =~ tr/0-9 //dc;
+                } else {
+                    $val =~ s/(\d+) (\d+)/Shot $1 of $2/;
+                }
+                return $val;
+            },
+        },
+    },
+    0x0095 => { #31
+        Name => 'SkinToneCorrection',
+        Writable => 'int8s',
+        Count => 2,
+        PrintConv => {
+            '0 0' => 'Off',
+            '1 1' => 'On (type 1)',
+            '1 2' => 'On (type 2)',
+        },
+    },
+    0x0096 => { #31
+        Name => 'ClarityControl',
+        Writable => 'int8s',
+        Count => 2,
+        PrintConv => {
+            '0 0' => 'Off',
+            OTHER => sub {
+                my ($val, $inv) = @_;
+                if ($inv) {
+                    $val =~ /(\d+ -?\d+)/ and return $1;
+                    return ("1 $val");
+                } elsif ($val =~ /^1 (-?\d+)$/) {
+                    return $1 ? sprintf('%+d', $1) : 0;
+                } else {
+                    return "Unknown ($val)";
+                }
+            },
+        },
     },
     0x0200 => { #5
         Name => 'BlackPoint',
@@ -2758,10 +2867,10 @@ my %binaryDataAttrs = (
         Groups => { 2 => 'Author' },
         Writable => 'string',
     },
-    0x0230 => { #PH (K-x AVI videos)
+    0x0230 => { #PH (K-x AVI videos) (and K-70/Q-S1 MOV videos, ref 31)
         Name => 'FirmwareVersion',
-        Notes => 'only in AVI videos',
-        # this tag only exists in AVI videos, and for the K-x the value of
+        Notes => 'only in videos',
+        # this tag only exists in AVI/MOV videos, and for the K-x the value of
         # this tag is "K-x Ver 1.00", which is the same as the EXIF Software
         # tag.  I used a different tag name for this because Pentax uses the
         # AVI Software tag for a different string, "PENTAX K-x".
@@ -2794,6 +2903,11 @@ my %binaryDataAttrs = (
     # 0x023b - undef[9] (K-01)
     #  01a700500000000000, 91a700500000000000, 41a700500000000000, 002700500000000000
     #  c00500400000000000, 400500500000000000, 4004ff420100000000, 4087ff480000000000
+    0x023f => { #31 (K-70 MOV videos)
+        Name => 'Model',
+        Description => 'Camera Model Name',
+        Writable => 'string',
+    },
     0x0243 => { #PH
         Name => 'PixelShiftInfo',
         SubDirectory => { TagTable => 'Image::ExifTool::Pentax::PixelShiftInfo' },
@@ -2927,8 +3041,10 @@ my %binaryDataAttrs = (
             5 => 'On but Disabled', # (NC for K-3)
             6 => 'On (Video)', # (NC for K-3)
             7 => 'On (AA simulation off)',
+            8 => 'Off (AA simulation type 1) (8)', #forum8362 (K-70)
             12 => 'Off (AA simulation type 1)', # (AA linear motion)
             15 => 'On (AA simulation type 1)', # (AA linear motion)
+            16 => 'Off (AA simulation type 2) (16)', #forum8362 (K-70)
             20 => 'Off (AA simulation type 2)', # (AA circular motion)
             23 => 'On (AA simulation type 2)', # (AA circular motion)
         },
@@ -3643,12 +3759,13 @@ my %binaryDataAttrs = (
             0x50 => 'Day White Fluorescent',
             0x60 => 'White Fluorescent',
             0x70 => 'Tungsten',
+            0x80 => 'Unknown', #31 (or not set due to inadequate lighting)
         },
     },
     13.1 => { #30
         Name => 'AEMeteringMode2',
         Condition => '$$self{AEInfoSize} == 24', # (not thoroughly tested for other sizes)
-        Notes => 'K7 and Kx, override for an incompatable metering mode setting',
+        Notes => 'K7 and Kx, override for an incompatible metering mode setting',
         Mask => 0x0f,
         PrintConv => {
             0 => 'Multi-segment',
@@ -5532,8 +5649,8 @@ my %binaryDataAttrs = (
             800 => 800, #PH
             1600 => 1600, #PH
             3200 => 3200, #PH
-            # seen 65534 for Q-S1 MOV video - PH
-            # seen 65535 for K-S1 MOV video - PH
+            65534 => 'Auto 2', #PH (Q-S1 MOV) [how is this different from 65535?]
+            65535 => 'Auto', #PH (K-S1 MOV)
         },
     },
     0x0017 => {
@@ -5639,7 +5756,16 @@ my %binaryDataAttrs = (
             TagTable => 'Image::ExifTool::Pentax::Main',
             Start => 10,
             Base => '$start',
-            ByteOrder => 'BigEndian',
+            ByteOrder => 'Unknown', # K-70 is little-endian, K-x is big-endian
+        },
+    },
+    mknt => { # (Q-S1)
+        Name => 'MakerNotes',
+        SubDirectory => {
+            TagTable => 'Image::ExifTool::Pentax::Main',
+            Start => 10,
+            Base => '$start',
+            ByteOrder => 'Unknown',
         },
     },
 );
@@ -5662,6 +5788,7 @@ my %binaryDataAttrs = (
     GROUPS => { 0 => 'MakerNotes', 2 => 'Camera' },
     0x0c => {
         Name => 'Model',
+        Description => 'Camera Model Name',
         Format => 'string[32]',
     },
 );
@@ -6064,4 +6191,4 @@ sub CryptShutterCount($$)
 
 __END__
 
-#line 6136
+#line 6263

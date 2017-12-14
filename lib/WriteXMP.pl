@@ -617,7 +617,7 @@ sub WriteXMP($$;$)
     my ($et, $dirInfo, $tagTablePtr) = @_;
     $et or return 1;    # allow dummy access to autoload this package
     my $dataPt = $$dirInfo{DataPt};
-    my (%capture, %nsUsed, $xmpErr, $tagInfo, $about);
+    my (%capture, %nsUsed, $xmpErr, $about);
     my $changed = 0;
     my $xmpFile = (not $tagTablePtr);   # this is an XMP data file if no $tagTablePtr
     # prefer XMP over other metadata formats in some types of files
@@ -640,6 +640,12 @@ sub WriteXMP($$;$)
     delete $$et{XMP_NO_XPACKET};
     delete $$et{XMP_IS_XML};
     delete $$et{XMP_IS_SVG};
+
+    # get value for new rdf:about
+    my $tagInfo = $Image::ExifTool::XMP::rdf{about};
+    if (defined $$et{NEW_VALUE}{$tagInfo}) {
+        $about = $et->GetNewValue($$et{NEW_VALUE}{$tagInfo}) || '';
+    }
 
     if ($xmpFile or $dirLen) {
         delete $$et{XMP_ERROR};
@@ -669,9 +675,7 @@ sub WriteXMP($$;$)
                 }
             }
         }
-        $tagInfo = $Image::ExifTool::XMP::rdf{about};
-        if (defined $$et{NEW_VALUE}{$tagInfo}) {
-            $about = $et->GetNewValue($$et{NEW_VALUE}{$tagInfo}) || '';
+        if (defined $about) {
             if ($verbose > 1) {
                 my $wasAbout = $$et{XMP_ABOUT};
                 $et->VerboseValue('- XMP-rdf:About', UnescapeXML($wasAbout)) if defined $wasAbout;
@@ -684,6 +688,16 @@ sub WriteXMP($$;$)
         }
         delete $$et{XMP_ERROR};
         delete $$et{XMP_ABOUT};
+
+        # call InitWriteDirs to initialize FORCE_WRITE flags if necessary
+        $et->InitWriteDirs({}, 'XMP') if $xmpFile and $et->GetNewValue('ForceWrite');
+        # set changed if we are ForceWrite tag was set to "XMP"
+        ++$changed if $$et{FORCE_WRITE}{XMP};
+
+    } elsif (defined $about) {
+        $et->VerboseValue('+ XMP-rdf:About', $about);
+        $about = EscapeXML($about); # must escape for XML
+        # (don't increment $changed here because we need another tag to be written)
     } else {
         $about = '';
     }
@@ -1108,6 +1122,7 @@ sub WriteXMP($$;$)
     my $maxDataLen = $$dirInfo{MaxDataLen};
     # get DataPt again because it may have been set by ProcessXMP
     $dataPt = $$dirInfo{DataPt};
+
     # return now if we didn't change anything
     unless ($changed or ($maxDataLen and $dataPt and defined $$dataPt and
         length($$dataPt) > $maxDataLen))

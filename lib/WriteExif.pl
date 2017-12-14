@@ -563,6 +563,8 @@ sub WriteExif($$$)
             # update local variables from fixed values
             $base = $$dirInfo{Base};
             $dataPos = $$dirInfo{DataPos};
+            # changed if ForceWrite tag was was set to "FixBase"
+            ++$$et{CHANGED} if $$et{FORCE_WRITE}{FixBase};
         }
 
         # initialize variables to handle mandatory tags
@@ -899,7 +901,9 @@ Entry:  for (;;) {
                     if ($oldID <= $lastTagID and not $inMakerNotes) {
                         my $str = $oldInfo ? "$$oldInfo{Name} tag" : sprintf('tag 0x%x',$oldID);
                         if ($oldID == $lastTagID) {
-                            $et->Warn("Duplicate $str in $name");;
+                            $et->Warn("Duplicate $str in $name");
+                            # put this tag back into the newTags list if necessary
+                            unshift @newTags, $oldID if defined $set{$oldID};
                         } else {
                             $et->Warn("\u$str out of sequence in $name");
                         }
@@ -1094,7 +1098,7 @@ NoWrite:            next if $isNew > 0;
                         # value undefined if deleting this tag
                         # (also delete tag if cross-deleting and this isn't a date/time shift)
                         if (not defined $newVal or ($xDelete{$newID} and not defined $$nvHash{Shift})) {
-                            if ($$newInfo{RawConvInv} and defined $$nvHash{Value}) {
+                            if (not defined $newVal and $$newInfo{RawConvInv} and defined $$nvHash{Value}) {
                                 # error in RawConvInv, so rewrite existing tag
                                 goto NoOverwrite; # GOTO!
                             }
@@ -2448,6 +2452,9 @@ NoOverwrite:            next if $isNew > 0;
     # return empty string if no entries in directory
     # (could be up to 10 bytes and still be empty)
     $newData = '' if defined $newData and length($newData) < 12;
+
+    # set changed if ForceWrite tag was set to "EXIF"
+    ++$$et{CHANGED} if defined $newData and length $newData and $$et{FORCE_WRITE}{EXIF};
 
     return $newData;    # return our directory data
 }

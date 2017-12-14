@@ -100,6 +100,8 @@ lib/Image/ExifTool/Charset/CVS/Repository
 lib/Image/ExifTool/Charset/CVS/Root
 lib/Image/ExifTool/Charset/CVS/Template
 lib/Image/ExifTool/Charset/Cyrillic.pm
+lib/Image/ExifTool/Charset/DOSLatin1.pm
+lib/Image/ExifTool/Charset/DOSLatinUS.pm
 lib/Image/ExifTool/Charset/Greek.pm
 lib/Image/ExifTool/Charset/Hebrew.pm
 lib/Image/ExifTool/Charset/JIS.pm
@@ -164,6 +166,7 @@ lib/Image/ExifTool/Import.pm
 lib/Image/ExifTool/InDesign.pm
 lib/Image/ExifTool/JPEG.pm
 lib/Image/ExifTool/JPEGDigest.pm
+lib/Image/ExifTool/JSON.pm
 lib/Image/ExifTool/JVC.pm
 lib/Image/ExifTool/Jpeg2000.pm
 lib/Image/ExifTool/Kodak.pm
@@ -203,6 +206,7 @@ lib/Image/ExifTool/MPEG.pm
 lib/Image/ExifTool/MPF.pm
 lib/Image/ExifTool/MWG.pm
 lib/Image/ExifTool/MXF.pm
+lib/Image/ExifTool/MacOS.pm
 lib/Image/ExifTool/MakerNotes.pm
 lib/Image/ExifTool/Matroska.pm
 lib/Image/ExifTool/Microsoft.pm
@@ -264,6 +268,7 @@ lib/Image/ExifTool/Theora.pm
 lib/Image/ExifTool/Torrent.pm
 lib/Image/ExifTool/Unknown.pm
 lib/Image/ExifTool/VCard.pm
+lib/Image/ExifTool/Validate.pm
 lib/Image/ExifTool/Vorbis.pm
 lib/Image/ExifTool/WriteCanonRaw.pl
 lib/Image/ExifTool/WriteExif.pl

@@ -15,7 +15,7 @@ use strict;
 use vars qw($VERSION %csType);
 use Image::ExifTool qw(:DataAccess :Utils);
 
-$VERSION = '1.09';
+$VERSION = '1.11';
 
 my %charsetTable;   # character set tables we've loaded
 
@@ -58,6 +58,8 @@ my %unicode2byte = (
     Hebrew       => 0x101,
     Latin        => 0x101,
     Latin2       => 0x101,
+    DOSLatinUS   => 0x101,
+    DOSLatin1    => 0x101,
     MacCroatian  => 0x101,
     MacCyrillic  => 0x101,
     MacGreek     => 0x101,
@@ -142,6 +144,7 @@ sub IsUTF16($)
 # - byte order only used for fixed-width 2-byte and 4-byte character sets
 # - byte order mark observed and then removed with UCS2 and UCS4
 # - no warnings are issued if ExifTool object is not provided
+# - sets ExifTool WrongByteOrder flag if byte order is Unknown and current order is wrong
 sub Decompose($$$;$)
 {
     local $_;
@@ -223,6 +226,7 @@ sub Decompose($$$;$)
                     # we guessed wrong, so decode using the other byte order
                     $fmt =~ tr/nvNV/vnVN/;
                     @uni = unpack($fmt, $val);
+                    $$et{WrongByteOrder} = 1;
                 }
             }
             # handle surrogate pairs of UTF-16
@@ -252,7 +256,10 @@ sub Decompose($$$;$)
                     ++$e2;
                 }
                 # use this byte order if there are fewer errors
-                return \@try if $e2 < $e1;
+                if ($e2 < $e1) {
+                    $$et{WrongByteOrder} = 1;
+                    return \@try;
+                }
             }
         } else {
             # translate any characters found in the lookup
@@ -387,4 +394,4 @@ sub Recompose($$;$$)
 
 __END__
 
-#line 424
+#line 432

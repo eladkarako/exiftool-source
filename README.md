@@ -1,5 +1,5 @@
-<h1><img width="48" height="48" src="icon.png"/>exiftool-source</h2>
-<h2>exiftool is a collection of Perl scripts and LIBs, a.k.a distributed as PAR, if you're interested to see the source you can simply extract it with 7zip. This is what inside the latest version.</h2>
+<h1><img width="48" height="48" src="icon.png"/> exiftool-source</h2>
+<h2>exiftool (<code>v10.68</code>) is a collection of Perl scripts and LIBs, a.k.a distributed as PAR, if you're interested to see the source you can simply extract it with 7zip. This is what inside the latest version.</h2>
 
 <pre>
 /
@@ -260,6 +260,7 @@
 |   |       |   JPEG.pm
 |   |       |   Jpeg2000.pm
 |   |       |   JPEGDigest.pm
+|   |       |   JSON.pm
 |   |       |   JVC.pm
 |   |       |   Kodak.pm
 |   |       |   KyoceraRaw.pm
@@ -267,6 +268,7 @@
 |   |       |   LNK.pm
 |   |       |   Lytro.pm
 |   |       |   M2TS.pm
+|   |       |   MacOS.pm
 |   |       |   MakerNotes.pm
 |   |       |   Matroska.pm
 |   |       |   Microsoft.pm
@@ -337,6 +339,7 @@
 |   |       |   Theora.pm
 |   |       |   Torrent.pm
 |   |       |   Unknown.pm
+|   |       |   Validate.pm
 |   |       |   VCard.pm
 |   |       |   Vorbis.pm
 |   |       |   WriteCanonRaw.pl
@@ -359,6 +362,8 @@
 |   |       |   |   Arabic.pm
 |   |       |   |   Baltic.pm
 |   |       |   |   Cyrillic.pm
+|   |       |   |   DOSLatin1.pm
+|   |       |   |   DOSLatinUS.pm
 |   |       |   |   Greek.pm
 |   |       |   |   Hebrew.pm
 |   |       |   |   JIS.pm

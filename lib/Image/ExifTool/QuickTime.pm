@@ -2,7 +2,7 @@
 #------------------------------------------------------------------------------
 # File:         QuickTime.pm
 #
-# Description:  Read QuickTime, MP4 and M4A meta information
+# Description:  Read QuickTime and MP4 meta information
 #
 # Revisions:    10/04/2005 - P. Harvey Created
 #               12/19/2005 - P. Harvey Added MP4 support
@@ -43,7 +43,7 @@ use Image::ExifTool qw(:DataAccess :Utils);
 use Image::ExifTool::Exif;
 use Image::ExifTool::GPS;
 
-$VERSION = '2.00';
+$VERSION = '2.05';
 
 sub FixWrongFormat($);
 sub ProcessMOV($$;$);
@@ -52,6 +52,9 @@ sub ProcessMetaData($$$);
 sub ProcessEncodingParams($$$);
 sub ProcessHybrid($$$);
 sub ProcessRights($$$);
+sub ParseItemLocation($$);
+sub ParseItemInfoEntry($$);
+sub ParseItemPropAssoc($$);
 sub ConvertISO6709($);
 sub ConvertChapterList($);
 sub PrintChapter($);
@@ -78,6 +81,9 @@ my %mimeLookup = (
     M4V  => 'video/x-m4v',
     MOV  => 'video/quicktime',
     MQV  => 'video/quicktime',
+    HEIC => 'image/heic',
+    HEVC => 'image/heic-sequence',
+    HEIF => 'image/heif',
 );
 
 # look up file type from ftyp atom type, with MIME type in comment if known
@@ -172,6 +178,10 @@ my %ftypLookup = (
     'ssc1' => 'Samsung stereoscopic, single stream',
     'ssc2' => 'Samsung stereoscopic, dual stream',
     'XAVC' => 'Sony XAVC', #PH
+    'heic' => 'High Efficiency Image Format HEVC still image (.HEIC)', # image/heic
+    'hevc' => 'High Efficiency Image Format HEVC sequence (.HEICS)', # image/heic-sequence
+    'mif1' => 'High Efficiency Image Format still image (.HEIF)', # image/heif
+    'msf1' => 'High Efficiency Image Format sequence (.HEIFS)', # image/heif-sequence
 );
 
 # information for time/date-based tags (time zero is Jan 1, 1904)
@@ -365,6 +375,7 @@ my %graphicsMode = (
         Groups => { 2 => 'Preview' },
         Binary => 1,
     },
+    # (note that moov is present for an HEIF sequence)
     moov => {
         Name => 'Movie',
         SubDirectory => { TagTable => 'Image::ExifTool::QuickTime::Movie' },
@@ -562,6 +573,7 @@ my %graphicsMode = (
 #            v410 => "Uncompressed Y'CbCr, 10-bit 4:4:4",
 #            v210 => "Uncompressed Y'CbCr, 10-bit 4:2:2",
 #        },
+        # (HEVC-encoded videos have a CompressorID of 'hvc1')
     },
     10 => {
         Name => 'VendorID',
@@ -629,6 +641,7 @@ my %graphicsMode = (
     gama => { Name => 'Gamma', Format => 'fixed32u' },
     # mjqt - default quantization table for MJPEG
     # mjht - default Huffman table for MJPEG
+    # csgm ? (seen in hevc video)
 #
 # spherical video v2 stuff (untested)
 #
@@ -640,6 +653,7 @@ my %graphicsMode = (
             0 => 'Monoscopic',
             1 => 'Stereoscopic Top-Bottom',
             2 => 'Stereoscopic Left-Right',
+            3 => 'Stereoscopic Stereo-Custom', # (provisional in spec as of 2017-10-10)
         },
     },
     sv3d => {
@@ -683,6 +697,7 @@ my %graphicsMode = (
         Name => 'EquirectangularProj',
         SubDirectory => { TagTable => 'Image::ExifTool::QuickTime::equi' },
     },
+    # mshp - MeshProjection (P.I.T.A. to decode, for not much reward, see ref)
 );
 
 # 'prhd' atom information (ref https://github.com/google/spatial-media/blob/master/docs/spherical-video-v2-rfc.md)
@@ -930,6 +945,7 @@ my %graphicsMode = (
             Name => 'SphericalVideoXML',
             Condition => '$$valPt=~/^\xff\xcc\x82\x63\xf8\x55\x4a\x93\x88\x14\x58\x7a\x02\x52\x1f\xdd/',
             Flags => [ 'Binary', 'BlockExtract' ],
+            Writable => 0,
             SubDirectory => {
                 TagTable => 'Image::ExifTool::XMP::Main',
                 Start => 16,
@@ -1932,16 +1948,27 @@ my %graphicsMode = (
     },
     iloc => {
         Name => 'ItemLocation',
-        Flags => ['Binary','Unknown'],
+        RawConv => \&ParseItemLocation,
+        Notes => 'parsed, but not extracted as a tag',
     },
     ipro => {
         Name => 'ItemProtection',
         Flags => ['Binary','Unknown'],
     },
-    iinf => {
+    iinf => [{
         Name => 'ItemInformation',
-        Flags => ['Binary','Unknown'],
-    },
+        Condition => '$$valPt =~ /^\0/', # (version 0?)
+        SubDirectory => {
+            TagTable => 'Image::ExifTool::QuickTime::ItemInfo',
+            Start => 6, # (4-byte version/flags + 2-byte count)
+        },
+    },{
+        Name => 'ItemInformation',
+        SubDirectory => {
+            TagTable => 'Image::ExifTool::QuickTime::ItemInfo',
+            Start => 8, # (4-byte version/flags + 4-byte count)
+        },
+    }],
    'xml ' => {
         Name => 'XML',
         Flags => [ 'Binary', 'Protected', 'BlockExtract' ],
@@ -1958,13 +1985,143 @@ my %graphicsMode = (
         Name => 'BinaryXML',
         Flags => ['Binary','Unknown'],
     },
-    pitm => {
+    pitm => [{
         Name => 'PrimaryItemReference',
-        Flags => ['Binary','Unknown'],
-    },
+        Condition => '$$valPt =~ /^\0/', # (version 0?)
+        RawConv => '$$self{PrimaryItem} = unpack("x4n",$val)',
+    },{
+        Name => 'PrimaryItemReference',
+        RawConv => '$$self{PrimaryItem} = unpack("x4N",$val)',
+    }],
     free => { #PH
         Name => 'Free',
         Flags => ['Binary','Unknown'],
+    },
+    iprp => {
+        Name => 'ItemProperties',
+        SubDirectory => { TagTable => 'Image::ExifTool::QuickTime::ItemProp' },
+    },
+    iref => {
+        Name => 'ItemReference',
+        # the version is needed to parse some of the item references
+        Condition => '$$self{ItemRefVersion} = ord($$valPt); 1',
+        SubDirectory => {
+            TagTable => 'Image::ExifTool::QuickTime::ItemRef',
+            Start => 4,
+        },
+    },
+    # idat
+);
+
+%Image::ExifTool::QuickTime::ItemProp = (
+    PROCESS_PROC => \&ProcessMOV,
+    GROUPS => { 2 => 'Image' },
+    ipco => {
+        Name => 'ItemPropertyContainer',
+        SubDirectory => { TagTable => 'Image::ExifTool::QuickTime::ItemPropCont' },
+    },
+    ipma => {
+        Name => 'ItemPropertyAssociation',
+        RawConv => \&ParseItemPropAssoc,
+        Notes => 'parsed, but not extracted as a tag',
+    },
+);
+
+%Image::ExifTool::QuickTime::ItemPropCont = (
+    PROCESS_PROC => \&ProcessMOV,
+    GROUPS => { 2 => 'Image' },
+    VARS => { START_INDEX => 1 },   # show verbose indices starting at 1
+    colr => [{
+        Name => 'ICC_Profile',
+        Condition => '$$valPt =~ /^(prof|rICC)/',
+        SubDirectory => {
+            TagTable => 'Image::ExifTool::ICC_Profile::Main',
+            Start => 4,
+        },
+    },{
+        Name => 'Unknown_colr',
+        Flags => ['Binary','Unknown','Hidden'],
+    }],
+    irot => {
+        Name => 'Rotation',
+        Format => 'int8u',
+        ValueConv => '$val * 90',
+    },
+    ispe => {
+        Name => 'ImageSpatialExtent',
+        Condition => '$$valPt =~ /^\0{4}/',     # (version/flags == 0/0)
+        RawConv => 'join " ", unpack("x4N*", $val)',
+        PrintConv => '$val =~ tr/ /x/; $val',
+    },
+    pixi => {
+        Name => 'ImagePixelDepth',
+        Condition => '$$valPt =~ /^\0{4}./s',   # (version/flags == 0/0 and count)
+        RawConv => 'join " ", unpack("x5C*", $val)',
+    },
+    auxC => {
+        Name => 'AuxiliaryImageType',
+        Format => 'undef',
+        RawConv => '$val = substr($val, 4); $val =~ s/\0.*//s; $val',
+    },
+    pasp => {
+        Name => 'PixelAspectRatio',
+        Format => 'int32u',
+    },
+    rloc => {
+        Name => 'RelativeLocation',
+        Format => 'int32u',
+        RawConv => '$val =~ s/^\S+\s+//; $val', # remove version/flags
+    },
+    clap => {
+        Name => 'CleanAperture',
+        Format => 'rational64u',
+        Notes => '4 numbers: width, height, left and top',
+    },
+    hvcC => {
+        Name => 'HEVCConfiguration',
+        Flags => ['Binary','Unknown'],
+    },
+);
+
+%Image::ExifTool::QuickTime::ItemRef = (
+    PROCESS_PROC => \&ProcessMOV,
+    GROUPS => { 2 => 'Image' },
+    # (Note: ExifTool's ItemRefVersion may be used to test the iref version number)
+    # dimg - DerivedImage
+    # thmb - Thumbnail
+    # auxl - AuxiliaryImage
+    cdsc => {
+        Name => 'ContentDescribes',
+        Notes => 'parsed, but not extracted as a tag',
+        RawConv => sub {
+            my ($val, $et) = @_;
+            my ($id, $count, @to);
+            if ($$et{ItemRefVersion}) {
+                return undef if length $val < 10;
+                ($id, $count, @to) = unpack('NnN*', $val);
+            } else {
+                return undef if length $val < 6;
+                ($id, $count, @to) = unpack('nnn*', $val);
+            }
+            # add all referenced item ID's to a "RefersTo" lookup
+            $$et{ItemInfo}{$id}{RefersTo}{$_} = 1 foreach @to;
+            return undef;
+        },
+    },
+);
+
+%Image::ExifTool::QuickTime::ItemInfo = (
+    PROCESS_PROC => \&ProcessMOV,
+    GROUPS => { 2 => 'Image' },
+    # avc1 - AVC image
+    # hvc1 - HEVC image
+    # lhv1 - L-HEVC image
+    # infe - ItemInformationEntry
+    # infe types: avc1,hvc1,lhv1,Exif,xml1,iovl(overlay image),grid,mime,hvt1(tile image)
+    infe => {
+        Name => 'ItemInfoEntry',
+        RawConv => \&ParseItemInfoEntry,
+        Notes => 'parsed, but not extracted as a tag',
     },
 );
 
@@ -1980,6 +2137,12 @@ my %graphicsMode = (
         ValueConv => '$val =~ s/^1 //; $val',  # (why 2 numbers? -- ignore the first if "1")
     },
     # also: sync, scpt, ssrc, iTunesInfo
+    cdsc => {
+        Name => 'ContentDescribes',
+        Format => 'int32u',
+        PrintConv => '"Track $val"',
+    },
+    # cdep (Structural Dependency QT tag?)
 );
 
 # track aperture mode dimensions atoms
@@ -2117,7 +2280,7 @@ my %graphicsMode = (
         Name => 'GenreID',
         Format => 'int32u',
         SeparateTable => 1,
-        PrintConv => { #21 (based on http://www.apple.com/itunes/affiliates/resources/documentation/genre-mapping.html)
+        PrintConv => { #21 (based on https://affiliate.itunes.apple.com/resources/documentation/genre-mapping/)
             2 => 'Music|Blues',
             3 => 'Music|Comedy',
             4 => "Music|Children's Music",
@@ -2276,13 +2439,13 @@ my %graphicsMode = (
             1114 => 'Music|Jazz|Smooth Jazz',
             1115 => 'Music|Latino|Latin Jazz',
             1116 => 'Music|Latino|Contemporary Latin',
-            1117 => 'Music|Latino|Latin Pop',
+            1117 => 'Music|Latino|Pop Latino',
             1118 => 'Music|Latino|Raices', # (Ra&iacute;ces)
             1119 => 'Music|Latino|Latin Urban',
             1120 => 'Music|Latino|Baladas y Boleros',
-            1121 => 'Music|Latino|Latin Alternative & Rock',
+            1121 => 'Music|Latino|Rock y Alternativo',
             1122 => 'Music|Brazilian',
-            1123 => 'Music|Latino|Regional Mexicano',
+            1123 => 'Music|Latino|Musica Mexicana', # (M&uacute;sica Mexicana)
             1124 => 'Music|Latino|Salsa y Tropical',
             1125 => 'Music|New Age|Environmental',
             1126 => 'Music|New Age|Healing',
@@ -2366,7 +2529,7 @@ my %graphicsMode = (
             1206 => 'Music|World|South Africa',
             1207 => 'Music|Jazz|Hard Bop',
             1208 => 'Music|Jazz|Trad Jazz',
-            1209 => 'Music|Jazz|Cool',
+            1209 => 'Music|Jazz|Cool Jazz',
             1210 => 'Music|Blues|Acoustic Blues',
             1211 => 'Music|Classical|High Classical',
             1220 => 'Music|Brazilian|Axe', # (Ax&eacute;)
@@ -2739,7 +2902,7 @@ my %graphicsMode = (
             1826 => 'Music Videos|Jazz|Avant-Garde Jazz',
             1828 => 'Music Videos|Jazz|Bop',
             1829 => 'Music Videos|Jazz|Contemporary Jazz',
-            1830 => 'Music Videos|Jazz|Cool',
+            1830 => 'Music Videos|Jazz|Cool Jazz',
             1831 => 'Music Videos|Jazz|Crossover Jazz',
             1832 => 'Music Videos|Jazz|Dixieland',
             1833 => 'Music Videos|Jazz|Fusion',
@@ -2756,7 +2919,7 @@ my %graphicsMode = (
             1844 => 'Music Videos|Latin|Latin Urban',
             1845 => 'Music Videos|Latin|Pop in Spanish',
             1846 => 'Music Videos|Latin|Raices',
-            1847 => 'Music Videos|Latin|Regional Mexicano',
+            1847 => 'Music Videos|Latin|Musica Mexicana', # (M&uacute;sica Mexicana)
             1848 => 'Music Videos|Latin|Salsa y Tropical',
             1849 => 'Music Videos|New Age|Healing',
             1850 => 'Music Videos|New Age|Meditation',
@@ -2857,6 +3020,7 @@ my %graphicsMode = (
             1947 => 'Music Videos|Alternative|Indie Pop',
             1948 => 'Music Videos|New Age|Yoga',
             1949 => 'Music Videos|Pop|Tribute',
+            1950 => 'Music Videos|Pop|Shows',
             4000 => 'TV Shows|Comedy',
             4001 => 'TV Shows|Drama',
             4002 => 'TV Shows|Animation',
@@ -2923,9 +3087,11 @@ my %graphicsMode = (
             6017 => 'App Store|Education',
             6018 => 'App Store|Books',
             6020 => 'App Store|Medical',
-            6021 => 'App Store|Newsstand',
+            6021 => 'App Store|Magazines & Newspapers',
             6022 => 'App Store|Catalogs',
             6023 => 'App Store|Food & Drink',
+            6024 => 'App Store|Shopping',
+            6025 => 'App Store|Stickers',
             7001 => 'App Store|Games|Action',
             7002 => 'App Store|Games|Adventure',
             7003 => 'App Store|Games|Arcade',
@@ -3127,7 +3293,7 @@ my %graphicsMode = (
             8201 => 'Tones|Ringtones|Jazz|Big Band',
             8202 => 'Tones|Ringtones|Jazz|Bop',
             8203 => 'Tones|Ringtones|Jazz|Contemporary Jazz',
-            8204 => 'Tones|Ringtones|Jazz|Cool',
+            8204 => 'Tones|Ringtones|Jazz|Cool Jazz',
             8205 => 'Tones|Ringtones|Jazz|Crossover Jazz',
             8206 => 'Tones|Ringtones|Jazz|Dixieland',
             8207 => 'Tones|Ringtones|Jazz|Fusion',
@@ -3151,7 +3317,7 @@ my %graphicsMode = (
             8225 => 'Tones|Ringtones|Latin|Latin Urban',
             8226 => 'Tones|Ringtones|Latin|Pop in Spanish',
             8227 => 'Tones|Ringtones|Latin|Raices',
-            8228 => 'Tones|Ringtones|Latin|Regional Mexicano',
+            8228 => 'Tones|Ringtones|Latin|Musica Mexicana', # (M&uacute;sica Mexicana)
             8229 => 'Tones|Ringtones|Latin|Salsa y Tropical',
             8230 => 'Tones|Ringtones|Marching Bands',
             8231 => 'Tones|Ringtones|New Age|Healing',
@@ -3289,6 +3455,7 @@ my %graphicsMode = (
             8364 => 'Tones|Ringtones|Alternative|Indie Pop',
             8365 => 'Tones|Ringtones|New Age|Yoga',
             8366 => 'Tones|Ringtones|Pop|Tribute',
+            8367 => 'Tones|Ringtones|Pop|Shows',
             9002 => 'Books|Nonfiction',
             9003 => 'Books|Romance',
             9004 => 'Books|Travel & Adventure',
@@ -3805,34 +3972,34 @@ my %graphicsMode = (
             12217 => 'Mac App Store|Games|Strategy',
             12218 => 'Mac App Store|Games|Trivia',
             12219 => 'Mac App Store|Games|Word',
-            13001 => 'App Store|Newsstand|News & Politics',
-            13002 => 'App Store|Newsstand|Fashion & Style',
-            13003 => 'App Store|Newsstand|Home & Garden',
-            13004 => 'App Store|Newsstand|Outdoors & Nature',
-            13005 => 'App Store|Newsstand|Sports & Leisure',
-            13006 => 'App Store|Newsstand|Automotive',
-            13007 => 'App Store|Newsstand|Arts & Photography',
-            13008 => 'App Store|Newsstand|Brides & Weddings',
-            13009 => 'App Store|Newsstand|Business & Investing',
-            13010 => "App Store|Newsstand|Children's Magazines",
-            13011 => 'App Store|Newsstand|Computers & Internet',
-            13012 => 'App Store|Newsstand|Cooking, Food & Drink',
-            13013 => 'App Store|Newsstand|Crafts & Hobbies',
-            13014 => 'App Store|Newsstand|Electronics & Audio',
-            13015 => 'App Store|Newsstand|Entertainment',
-            13017 => 'App Store|Newsstand|Health, Mind & Body',
-            13018 => 'App Store|Newsstand|History',
-            13019 => 'App Store|Newsstand|Literary Magazines & Journals',
-            13020 => "App Store|Newsstand|Men's Interest",
-            13021 => 'App Store|Newsstand|Movies & Music',
-            13023 => 'App Store|Newsstand|Parenting & Family',
-            13024 => 'App Store|Newsstand|Pets',
-            13025 => 'App Store|Newsstand|Professional & Trade',
-            13026 => 'App Store|Newsstand|Regional News',
-            13027 => 'App Store|Newsstand|Science',
-            13028 => 'App Store|Newsstand|Teens',
-            13029 => 'App Store|Newsstand|Travel & Regional',
-            13030 => "App Store|Newsstand|Women's Interest",
+            13001 => 'App Store|Magazines & Newspapers|News & Politics',
+            13002 => 'App Store|Magazines & Newspapers|Fashion & Style',
+            13003 => 'App Store|Magazines & Newspapers|Home & Garden',
+            13004 => 'App Store|Magazines & Newspapers|Outdoors & Nature',
+            13005 => 'App Store|Magazines & Newspapers|Sports & Leisure',
+            13006 => 'App Store|Magazines & Newspapers|Automotive',
+            13007 => 'App Store|Magazines & Newspapers|Arts & Photography',
+            13008 => 'App Store|Magazines & Newspapers|Brides & Weddings',
+            13009 => 'App Store|Magazines & Newspapers|Business & Investing',
+            13010 => "App Store|Magazines & Newspapers|Children's Magazines",
+            13011 => 'App Store|Magazines & Newspapers|Computers & Internet',
+            13012 => 'App Store|Magazines & Newspapers|Cooking, Food & Drink',
+            13013 => 'App Store|Magazines & Newspapers|Crafts & Hobbies',
+            13014 => 'App Store|Magazines & Newspapers|Electronics & Audio',
+            13015 => 'App Store|Magazines & Newspapers|Entertainment',
+            13017 => 'App Store|Magazines & Newspapers|Health, Mind & Body',
+            13018 => 'App Store|Magazines & Newspapers|History',
+            13019 => 'App Store|Magazines & Newspapers|Literary Magazines & Journals',
+            13020 => "App Store|Magazines & Newspapers|Men's Interest",
+            13021 => 'App Store|Magazines & Newspapers|Movies & Music',
+            13023 => 'App Store|Magazines & Newspapers|Parenting & Family',
+            13024 => 'App Store|Magazines & Newspapers|Pets',
+            13025 => 'App Store|Magazines & Newspapers|Professional & Trade',
+            13026 => 'App Store|Magazines & Newspapers|Regional News',
+            13027 => 'App Store|Magazines & Newspapers|Science',
+            13028 => 'App Store|Magazines & Newspapers|Teens',
+            13029 => 'App Store|Magazines & Newspapers|Travel & Regional',
+            13030 => "App Store|Magazines & Newspapers|Women's Interest",
             15000 => 'Textbooks|Arts & Entertainment',
             15001 => 'Textbooks|Arts & Entertainment|Art & Architecture',
             15002 => 'Textbooks|Arts & Entertainment|Art & Architecture|Urban Planning',
@@ -4146,6 +4313,21 @@ my %graphicsMode = (
             15310 => 'Textbooks|Travel & Adventure|Specialty Travel',
             15311 => 'Textbooks|Comics & Graphic Novels|Comics',
             15312 => 'Textbooks|Reference|Manuals',
+            16001 => 'App Store|Stickers|Emoji & Expressions',
+            16003 => 'App Store|Stickers|Animals & Nature',
+            16005 => 'App Store|Stickers|Art',
+            16006 => 'App Store|Stickers|Celebrations',
+            16007 => 'App Store|Stickers|Celebrities',
+            16008 => 'App Store|Stickers|Comics & Cartoons',
+            16009 => 'App Store|Stickers|Eating & Drinking',
+            16010 => 'App Store|Stickers|Gaming',
+            16014 => 'App Store|Stickers|Movies & TV',
+            16015 => 'App Store|Stickers|Music',
+            16017 => 'App Store|Stickers|People',
+            16019 => 'App Store|Stickers|Places & Objects',
+            16021 => 'App Store|Stickers|Sports & Activities',
+            16025 => 'App Store|Stickers|Kids & Family',
+            16026 => 'App Store|Stickers|Fashion',
             100000 => 'Music|Christian & Gospel',
             100001 => 'Music|Classical|Art Song',
             100002 => 'Music|Classical|Brass & Woodwinds',
@@ -4169,6 +4351,7 @@ my %graphicsMode = (
             100020 => 'Music|Alternative|Indie Pop',
             100021 => 'Music|New Age|Yoga',
             100022 => 'Music|Pop|Tribute',
+            100023 => 'Music|Pop|Shows',
             40000000 => 'iTunes U',
             40000001 => 'iTunes U|Business',
             40000002 => 'iTunes U|Business|Economics',
@@ -4392,6 +4575,7 @@ my %graphicsMode = (
             50000088 => 'Books|Fiction & Literature|Light Novels',
             50000089 => 'Books|Comics & Graphic Novels|Manga|Horror',
             50000090 => 'Books|Comics & Graphic Novels|Comics',
+            50000091 => 'Books|Romance|Multicultural',
         },
     },
     grup => 'Grouping', #10
@@ -4426,161 +4610,161 @@ my %graphicsMode = (
         Format => 'int32u',
         SeparateTable => 1,
         PrintConv => { #21
-            143441 => 'United States', # USA
-            143442 => 'France', # FRA
-            143443 => 'Germany', # DEU
-            143444 => 'United Kingdom', # GBR
-            143445 => 'Austria', # AUT
-            143446 => 'Belgium', # BEL
-            143447 => 'Finland', # FIN
-            143448 => 'Greece', # GRC
-            143449 => 'Ireland', # IRL
-            143450 => 'Italy', # ITA
-            143451 => 'Luxembourg', # LUX
-            143452 => 'Netherlands', # NLD
-            143453 => 'Portugal', # PRT
-            143454 => 'Spain', # ESP
-            143455 => 'Canada', # CAN
-            143456 => 'Sweden', # SWE
-            143457 => 'Norway', # NOR
-            143458 => 'Denmark', # DNK
-            143459 => 'Switzerland', # CHE
-            143460 => 'Australia', # AUS
-            143461 => 'New Zealand', # NZL
-            143462 => 'Japan', # JPN
-            143463 => 'Hong Kong', # HKG
-            143464 => 'Singapore', # SGP
-            143465 => 'China', # CHN
-            143466 => 'Republic of Korea', # KOR
-            143467 => 'India', # IND
-            143468 => 'Mexico', # MEX
-            143469 => 'Russia', # RUS
-            143470 => 'Taiwan', # TWN
-            143471 => 'Vietnam', # VNM
-            143472 => 'South Africa', # ZAF
-            143473 => 'Malaysia', # MYS
-            143474 => 'Philippines', # PHL
-            143475 => 'Thailand', # THA
-            143476 => 'Indonesia', # IDN
-            143477 => 'Pakistan', # PAK
-            143478 => 'Poland', # POL
-            143479 => 'Saudi Arabia', # SAU
-            143480 => 'Turkey', # TUR
-            143481 => 'United Arab Emirates', # ARE
-            143482 => 'Hungary', # HUN
-            143483 => 'Chile', # CHL
-            143484 => 'Nepal', # NPL
-            143485 => 'Panama', # PAN
-            143486 => 'Sri Lanka', # LKA
-            143487 => 'Romania', # ROU
-            143489 => 'Czech Republic', # CZE
-            143491 => 'Israel', # ISR
-            143492 => 'Ukraine', # UKR
-            143493 => 'Kuwait', # KWT
-            143494 => 'Croatia', # HRV
-            143495 => 'Costa Rica', # CRI
-            143496 => 'Slovakia', # SVK
-            143497 => 'Lebanon', # LBN
-            143498 => 'Qatar', # QAT
-            143499 => 'Slovenia', # SVN
-            143501 => 'Colombia', # COL
-            143502 => 'Venezuela', # VEN
-            143503 => 'Brazil', # BRA
-            143504 => 'Guatemala', # GTM
-            143505 => 'Argentina', # ARG
-            143506 => 'El Salvador', # SLV
-            143507 => 'Peru', # PER
-            143508 => 'Dominican Republic', # DOM
-            143509 => 'Ecuador', # ECU
-            143510 => 'Honduras', # HND
-            143511 => 'Jamaica', # JAM
-            143512 => 'Nicaragua', # NIC
-            143513 => 'Paraguay', # PRY
-            143514 => 'Uruguay', # URY
-            143515 => 'Macau', # MAC
-            143516 => 'Egypt', # EGY
-            143517 => 'Kazakhstan', # KAZ
-            143518 => 'Estonia', # EST
-            143519 => 'Latvia', # LVA
-            143520 => 'Lithuania', # LTU
-            143521 => 'Malta', # MLT
-            143523 => 'Moldova', # MDA
-            143524 => 'Armenia', # ARM
-            143525 => 'Botswana', # BWA
-            143526 => 'Bulgaria', # BGR
-            143528 => 'Jordan', # JOR
-            143529 => 'Kenya', # KEN
-            143530 => 'Macedonia', # MKD
-            143531 => 'Madagascar', # MDG
-            143532 => 'Mali', # MLI
-            143533 => 'Mauritius', # MUS
-            143534 => 'Niger', # NER
-            143535 => 'Senegal', # SEN
-            143536 => 'Tunisia', # TUN
-            143537 => 'Uganda', # UGA
-            143538 => 'Anguilla', # AIA
-            143539 => 'Bahamas', # BHS
-            143540 => 'Antigua and Barbuda', # ATG
-            143541 => 'Barbados', # BRB
-            143542 => 'Bermuda', # BMU
-            143543 => 'British Virgin Islands', # VGB
-            143544 => 'Cayman Islands', # CYM
-            143545 => 'Dominica', # DMA
-            143546 => 'Grenada', # GRD
-            143547 => 'Montserrat', # MSR
-            143548 => 'St. Kitts and Nevis', # KNA
-            143549 => 'St. Lucia', # LCA
-            143550 => 'St. Vincent and The Grenadines', # VCT
-            143551 => 'Trinidad and Tobago', # TTO
-            143552 => 'Turks and Caicos', # TCA
-            143553 => 'Guyana', # GUY
-            143554 => 'Suriname', # SUR
-            143555 => 'Belize', # BLZ
-            143556 => 'Bolivia', # BOL
-            143557 => 'Cyprus', # CYP
-            143558 => 'Iceland', # ISL
-            143559 => 'Bahrain', # BHR
-            143560 => 'Brunei Darussalam', # BRN
-            143561 => 'Nigeria', # NGA
-            143562 => 'Oman', # OMN
-            143563 => 'Algeria', # DZA
-            143564 => 'Angola', # AGO
-            143565 => 'Belarus', # BLR
-            143566 => 'Uzbekistan', # UZB
-            143568 => 'Azerbaijan', # AZE
-            143571 => 'Yemen', # YEM
-            143572 => 'Tanzania', # TZA
-            143573 => 'Ghana', # GHA
-            143575 => 'Albania', # ALB
-            143576 => 'Benin', # BEN
-            143577 => 'Bhutan', # BTN
-            143578 => 'Burkina Faso', # BFA
-            143579 => 'Cambodia', # KHM
-            143580 => 'Cape Verde', # CPV
-            143581 => 'Chad', # TCD
-            143582 => 'Republic of the Congo', # COG
-            143583 => 'Fiji', # FJI
-            143584 => 'Gambia', # GMB
-            143585 => 'Guinea-Bissau', # GNB
-            143586 => 'Kyrgyzstan', # KGZ
-            143587 => "Lao People's Democratic Republic", # LAO
-            143588 => 'Liberia', # LBR
-            143589 => 'Malawi', # MWI
-            143590 => 'Mauritania', # MRT
-            143591 => 'Federated States of Micronesia', # FSM
-            143592 => 'Mongolia', # MNG
-            143593 => 'Mozambique', # MOZ
-            143594 => 'Namibia', # NAM
-            143595 => 'Palau', # PLW
-            143597 => 'Papua New Guinea', # PNG
-            143598 => 'Sao Tome and Principe', # STP (S&atilde;o Tom&eacute; and Pr&iacute;ncipe)
-            143599 => 'Seychelles', # SYC
-            143600 => 'Sierra Leone', # SLE
-            143601 => 'Solomon Islands', # SLB
-            143602 => 'Swaziland', # SWZ
-            143603 => 'Tajikistan', # TJK
-            143604 => 'Turkmenistan', # TKM
-            143605 => 'Zimbabwe', # ZWE
+            143441 => 'United States', # US
+            143442 => 'France', # FR
+            143443 => 'Germany', # DE
+            143444 => 'United Kingdom', # GB
+            143445 => 'Austria', # AT
+            143446 => 'Belgium', # BE
+            143447 => 'Finland', # FI
+            143448 => 'Greece', # GR
+            143449 => 'Ireland', # IE
+            143450 => 'Italy', # IT
+            143451 => 'Luxembourg', # LU
+            143452 => 'Netherlands', # NL
+            143453 => 'Portugal', # PT
+            143454 => 'Spain', # ES
+            143455 => 'Canada', # CA
+            143456 => 'Sweden', # SE
+            143457 => 'Norway', # NO
+            143458 => 'Denmark', # DK
+            143459 => 'Switzerland', # CH
+            143460 => 'Australia', # AU
+            143461 => 'New Zealand', # NZ
+            143462 => 'Japan', # JP
+            143463 => 'Hong Kong', # HK
+            143464 => 'Singapore', # SG
+            143465 => 'China', # CN
+            143466 => 'Republic of Korea', # KR
+            143467 => 'India', # IN
+            143468 => 'Mexico', # MX
+            143469 => 'Russia', # RU
+            143470 => 'Taiwan', # TW
+            143471 => 'Vietnam', # VN
+            143472 => 'South Africa', # ZA
+            143473 => 'Malaysia', # MY
+            143474 => 'Philippines', # PH
+            143475 => 'Thailand', # TH
+            143476 => 'Indonesia', # ID
+            143477 => 'Pakistan', # PK
+            143478 => 'Poland', # PL
+            143479 => 'Saudi Arabia', # SA
+            143480 => 'Turkey', # TR
+            143481 => 'United Arab Emirates', # AE
+            143482 => 'Hungary', # HU
+            143483 => 'Chile', # CL
+            143484 => 'Nepal', # NP
+            143485 => 'Panama', # PA
+            143486 => 'Sri Lanka', # LK
+            143487 => 'Romania', # RO
+            143489 => 'Czech Republic', # CZ
+            143491 => 'Israel', # IL
+            143492 => 'Ukraine', # UA
+            143493 => 'Kuwait', # KW
+            143494 => 'Croatia', # HR
+            143495 => 'Costa Rica', # CR
+            143496 => 'Slovakia', # SK
+            143497 => 'Lebanon', # LB
+            143498 => 'Qatar', # QA
+            143499 => 'Slovenia', # SI
+            143501 => 'Colombia', # CO
+            143502 => 'Venezuela', # VE
+            143503 => 'Brazil', # BR
+            143504 => 'Guatemala', # GT
+            143505 => 'Argentina', # AR
+            143506 => 'El Salvador', # SV
+            143507 => 'Peru', # PE
+            143508 => 'Dominican Republic', # DO
+            143509 => 'Ecuador', # EC
+            143510 => 'Honduras', # HN
+            143511 => 'Jamaica', # JM
+            143512 => 'Nicaragua', # NI
+            143513 => 'Paraguay', # PY
+            143514 => 'Uruguay', # UY
+            143515 => 'Macau', # MO
+            143516 => 'Egypt', # EG
+            143517 => 'Kazakhstan', # KZ
+            143518 => 'Estonia', # EE
+            143519 => 'Latvia', # LV
+            143520 => 'Lithuania', # LT
+            143521 => 'Malta', # MT
+            143523 => 'Moldova', # MD
+            143524 => 'Armenia', # AM
+            143525 => 'Botswana', # BW
+            143526 => 'Bulgaria', # BG
+            143528 => 'Jordan', # JO
+            143529 => 'Kenya', # KE
+            143530 => 'Macedonia', # MK
+            143531 => 'Madagascar', # MG
+            143532 => 'Mali', # ML
+            143533 => 'Mauritius', # MU
+            143534 => 'Niger', # NE
+            143535 => 'Senegal', # SN
+            143536 => 'Tunisia', # TN
+            143537 => 'Uganda', # UG
+            143538 => 'Anguilla', # AI
+            143539 => 'Bahamas', # BS
+            143540 => 'Antigua and Barbuda', # AG
+            143541 => 'Barbados', # BB
+            143542 => 'Bermuda', # BM
+            143543 => 'British Virgin Islands', # VG
+            143544 => 'Cayman Islands', # KY
+            143545 => 'Dominica', # DM
+            143546 => 'Grenada', # GD
+            143547 => 'Montserrat', # MS
+            143548 => 'St. Kitts and Nevis', # KN
+            143549 => 'St. Lucia', # LC
+            143550 => 'St. Vincent and The Grenadines', # VC
+            143551 => 'Trinidad and Tobago', # TT
+            143552 => 'Turks and Caicos', # TC
+            143553 => 'Guyana', # GY
+            143554 => 'Suriname', # SR
+            143555 => 'Belize', # BZ
+            143556 => 'Bolivia', # BO
+            143557 => 'Cyprus', # CY
+            143558 => 'Iceland', # IS
+            143559 => 'Bahrain', # BH
+            143560 => 'Brunei Darussalam', # BN
+            143561 => 'Nigeria', # NG
+            143562 => 'Oman', # OM
+            143563 => 'Algeria', # DZ
+            143564 => 'Angola', # AO
+            143565 => 'Belarus', # BY
+            143566 => 'Uzbekistan', # UZ
+            143568 => 'Azerbaijan', # AZ
+            143571 => 'Yemen', # YE
+            143572 => 'Tanzania', # TZ
+            143573 => 'Ghana', # GH
+            143575 => 'Albania', # AL
+            143576 => 'Benin', # BJ
+            143577 => 'Bhutan', # BT
+            143578 => 'Burkina Faso', # BF
+            143579 => 'Cambodia', # KH
+            143580 => 'Cape Verde', # CV
+            143581 => 'Chad', # TD
+            143582 => 'Republic of the Congo', # CG
+            143583 => 'Fiji', # FJ
+            143584 => 'Gambia', # GM
+            143585 => 'Guinea-Bissau', # GW
+            143586 => 'Kyrgyzstan', # KG
+            143587 => "Lao People's Democratic Republic", # LA
+            143588 => 'Liberia', # LR
+            143589 => 'Malawi', # MW
+            143590 => 'Mauritania', # MR
+            143591 => 'Federated States of Micronesia', # FM
+            143592 => 'Mongolia', # MN
+            143593 => 'Mozambique', # MZ
+            143594 => 'Namibia', # NA
+            143595 => 'Palau', # PW
+            143597 => 'Papua New Guinea', # PG
+            143598 => 'Sao Tome and Principe', # ST (S&atilde;o Tom&eacute; and Pr&iacute;ncipe)
+            143599 => 'Seychelles', # SC
+            143600 => 'Sierra Leone', # SL
+            143601 => 'Solomon Islands', # SB
+            143602 => 'Swaziland', # SZ
+            143603 => 'Tajikistan', # TJ
+            143604 => 'Turkmenistan', # TM
+            143605 => 'Zimbabwe', # ZW
         },
     },
     soaa => 'SortAlbumArtist', #10
@@ -5287,7 +5471,7 @@ my %graphicsMode = (
         Name => 'ProtectionInfo', #3
         SubDirectory => { TagTable => 'Image::ExifTool::QuickTime::ProtectionInfo' },
     },
-    # chan - 16/36 bytes
+    # f - 16/36 bytes
     # esds - 31/40/42/43 bytes - ES descriptor (ref 3)
     damr => { #3
         Name => 'DecodeConfig',
@@ -5560,7 +5744,7 @@ my %graphicsMode = (
         Format => 'undef',  # (necessary to prevent decoding as string!)
         RawConv => q{
             return undef if unpack("N",$val) & 0x01;
-            $_ = substr($val,4); s/\0.*//s; $_;
+            $_ = substr($val,4); s/\0+/; /; s/\0.*//s; $_;
         },
     },
 );
@@ -5604,6 +5788,7 @@ my %graphicsMode = (
             vide => 'Video Track',
             subp => 'Subpicture', #http://www.google.nl/patents/US7778526
             nrtm => 'Non-Real Time Metadata', #PH (Sony ILCE-7S) [how is this different from "meta"?]
+            pict => 'Picture', # (HEIC images)
         },
     },
     12 => { #PH
@@ -5953,6 +6138,321 @@ sub GetLangInfoQT($$$)
 }
 
 #------------------------------------------------------------------------------
+# Get variable-length integer from data (used by ParseItemLocation)
+# Inputs: 0) data ref, 1) start position, 2) integer size in bytes (0, 4 or 8),
+#         3) default value
+# Returns: integer value, and updates current position
+sub GetVarInt($$$;$)
+{
+    my ($dataPt, $pos, $n, $default) = @_;
+    my $len = length $$dataPt;
+    $_[1] = $pos + $n;  # update current position
+    return undef if $pos + $n > $len;
+    if ($n == 0) {
+        return $default || 0;
+    } elsif ($n == 4) {
+        return Get32u($dataPt, $pos);
+    } elsif ($n == 8) {
+        return Get64u($dataPt, $pos);
+    }
+    return undef;
+}
+
+#------------------------------------------------------------------------------
+# Get null-terminated string from binary data (used by ParseItemInfoEntry)
+# Inputs: 0) data ref, 1) start position
+# Returns: string, and updates current position
+sub GetString($$)
+{
+    my ($dataPt, $pos) = @_;
+    my $len = length $$dataPt;
+    my $str = '';
+    while ($pos < $len) {
+        my $ch = substr($$dataPt, $pos, 1);
+        ++$pos;
+        last if ord($ch) == 0;
+        $str .= $ch;
+    }
+    $_[1] = $pos;   # update current position
+    return $str;
+}
+
+#==============================================================================
+# The following ParseXxx routines parse various boxes to extract this
+# information about embedded items in a $$et{ItemInfo} hash, keyed by item ID:
+#
+# iloc:
+#  ConstructionMethod - offset type: 0=file, 1=idat, 2=item
+#  DataReferenceIndex - 0 for "this file", otherwise index in dref box
+#  BaseOffset         - base for file offsets
+#  Extents            - list of index,offset,length details for data in file
+# infe:
+#  ProtectionIndex    - index if item is protected (0 for unprotected)
+#  Name               - item name
+#  ContentType        - mime type of item
+#  ContentEncoding    - item encoding
+#  URI                - URI of a 'uri '-type item
+# ipma:
+#  Association        - list of associated properties in the ipco container
+#  Essential          - list of "essential" flags for the associated properties
+# cdsc:
+#  RefersTo           - hash lookup of flags based on referred item ID
+# other:
+#  DocNum             - exiftool document number for this item
+#
+#------------------------------------------------------------------------------
+# Parse item location (iloc) box (ref ISO 14496-12:2015 pg.79)
+# Inputs: 0) iloc data, 1) ExifTool ref
+# Returns: undef, and fills in ExifTool ItemInfo hash
+sub ParseItemLocation($$)
+{
+    my ($val, $et) = @_;
+    my ($i, $j, $num, $pos, $id);
+    my ($extent_index, $extent_offset, $extent_length);
+
+    my $items = $$et{ItemInfo} || ($$et{ItemInfo} = { });
+    my $len = length $val;
+    return undef if $len < 8;
+    my $ver = Get8u(\$val, 0);
+    my $siz = Get16u(\$val, 4);
+    my $noff = ($siz >> 12);
+    my $nlen = ($siz >> 8) & 0x0f;
+    my $nbas = ($siz >> 4) & 0x0f;
+    my $nind = $siz & 0x0f;
+    if ($ver < 2) {
+        $num = Get16u(\$val, 6);
+        $pos = 8;
+    } else {
+        return undef if $len < 10;
+        $num = Get32u(\$val, 6);
+        $pos = 10;
+    }
+    for ($i=0; $i<$num; ++$i) {
+        if ($ver < 2) {
+            return undef if $pos + 2 > $len;
+            $id = Get16u(\$val, $pos);
+            $pos += 2;
+        } else {
+            return undef if $pos + 4 > $len;
+            $id = Get32u(\$val, $pos);
+            $pos += 4;
+        }
+        if ($ver == 1 or $ver == 2) {
+            return undef if $pos + 2 > $len;
+            $$items{$id}{ConstructionMethod} = Get16u(\$val, $pos) & 0x0f;
+            $pos += 2;
+        }
+        return undef if $pos + 2 > $len;
+        $$items{$id}{DataReferenceIndex} = Get16u(\$val, $pos);
+        $pos += 2;
+        $$items{$id}{BaseOffset} = GetVarInt(\$val, $pos, $nbas);
+        return undef if $pos + 2 > $len;
+        my $ext_num = Get16u(\$val, $pos);
+        $pos += 2;
+        my @extents;
+        for ($j=0; $j<$ext_num; ++$j) {
+            if ($ver == 1 or $ver == 2) {
+                $extent_index = GetVarInt(\$val, $pos, $nind, 1);
+            }
+            $extent_offset = GetVarInt(\$val, $pos, $noff);
+            $extent_length = GetVarInt(\$val, $pos, $nlen);
+            return undef unless defined $extent_length;
+            push @extents, [ $extent_index, $extent_offset, $extent_length ];
+        }
+        # save item location information keyed on 1-based item ID:
+        $$items{$id}{Extents} = \@extents;
+    }
+    return undef;
+}
+
+#------------------------------------------------------------------------------
+# Parse item information entry (infe) box (ref ISO 14496-12:2015 pg.82)
+# Inputs: 0) infe data, 1) ExifTool ref
+# Returns: undef, and fills in ExifTool ItemInfo hash
+sub ParseItemInfoEntry($$)
+{
+    my ($val, $et) = @_;
+    my $id;
+
+    my $verbose = $et->Options('Verbose');
+    my $items = $$et{ItemInfo} || ($$et{ItemInfo} = { });
+    my $len = length $val;
+    return undef if $len < 4;
+    my $ver = Get8u(\$val, 0);
+    my $pos = 4;
+    return undef if $pos + 4 > $len;
+    if ($ver == 0 or $ver == 1) {
+        $id = Get16u(\$val, $pos);
+        $$items{$id}{ProtectionIndex} = Get16u(\$val, $pos + 2);
+        $pos += 4;
+        $$items{$id}{Name} = GetString(\$val, $pos);
+        $$items{$id}{ContentType} = GetString(\$val, $pos);
+        $$items{$id}{ContentEncoding} = GetString(\$val, $pos);
+    } else {
+        if ($ver == 2) {
+            $id = Get16u(\$val, $pos);
+            $pos += 2;
+        } elsif ($ver == 3) {
+            $id = Get32u(\$val, $pos);
+            $pos += 4;
+        }
+        return undef if $pos + 6 > $len;
+        $$items{$id}{ProtectionIndex} = Get16u(\$val, $pos);
+        my $type = substr($val, $pos + 2, 4);
+        $$items{$id}{Type} = $type;
+        $pos += 6;
+        $$items{$id}{Name} = GetString(\$val, $pos);
+        if ($type eq 'mime') {
+            $$items{$id}{ContentType} = GetString(\$val, $pos);
+            $$items{$id}{ContentEncoding} = GetString(\$val, $pos);
+        } elsif ($type eq 'uri ') {
+            $$items{$id}{URI} = GetString(\$val, $pos);
+        }
+    }
+    $et->VPrint(1, "$$et{INDENT}  Item $id: Type=", $$items{$id}{Type} || '',
+                   ' Name=', $$items{$id}{Name} || '',
+                   ' ContentType=', $$items{$id}{ContentType} || '',
+                   "\n") if $verbose > 1;
+    return undef;
+}
+
+#------------------------------------------------------------------------------
+# Parse item property association (ipma) box (ref https://github.com/gpac/gpac/blob/master/src/isomedia/iff.c)
+# Inputs: 0) infe data, 1) ExifTool ref
+# Returns: undef, and fills in ExifTool ItemInfo hash
+# Note: this information is currently not used by ExifTool (must figure out how to do this)
+sub ParseItemPropAssoc($$)
+{
+    my ($val, $et) = @_;
+    my ($i, $j, $id);
+
+    my $verbose = $et->Options('Verbose');
+    my $items = $$et{ItemInfo} || ($$et{ItemInfo} = { });
+    my $len = length $val;
+    return undef if $len < 8;
+    my $ver = Get8u(\$val, 0);
+    my $flg = Get32u(\$val, 0);
+    my $num = Get32u(\$val, 4);
+    my $pos = 8;
+    for ($i=0; $i<$num; ++$i) {
+        if ($ver == 0) {
+            return undef if $pos + 3 > $len;
+            $id = Get16u(\$val, $pos);
+            $pos += 2;
+        } else {
+            return undef if $pos + 5 > $len;
+            $id = Get32u(\$val, $pos);
+            $pos += 4;
+        }
+        my $n = Get8u(\$val, $pos++);
+        my (@association, @essential);
+        if ($flg & 0x01) {
+            return undef if $pos + $n * 2 > $len;
+            for ($j=0; $j<$n; ++$j) {
+                my $tmp = Get16u(\$val, $pos + $j * 2);
+                push @association, $tmp & 0x7fff;
+                push @essential, ($tmp & 0x8000) ? 1 : 0;
+            }
+            $pos += $n * 2;
+        } else {
+            return undef if $pos + $n > $len;
+            for ($j=0; $j<$n; ++$j) {
+                my $tmp = Get8u(\$val, $pos + $j);
+                push @association, $tmp & 0x7f;
+                push @essential, ($tmp & 0x80) ? 1 : 0;
+            }
+            $pos += $n;
+        }
+        $$items{$id}{Association} = \@association;
+        $$items{$id}{Essential} = \@essential;
+        $et->VPrint(1, "$$et{INDENT}  Item $id properties: @association\n") if $verbose > 1;
+    }
+    return undef;
+}
+
+#------------------------------------------------------------------------------
+# Process item information now
+# Inputs: 0) ExifTool ref, 1) RAF ref
+sub HandleItemInfo($$)
+{
+    my ($et, $raf) = @_;
+    my $items = $$et{ItemInfo};
+    my $buff;
+
+    # extract information from EXIF/XMP metadata items
+    if ($items and $raf) {
+        my $curPos = $raf->Tell();
+        my $primary = $$et{PrimaryItem};
+        my $id;
+        foreach $id (sort { $a <=> $b } keys %$items) {
+            my $item = $$items{$id};
+            my $type = $$item{ContentType} || $$item{Type} || next;
+            unless ($type eq 'Exif') {
+                next unless $type eq 'application/rdf+xml';
+                $type = 'XMP';
+            }
+            if ($$item{ContentEncoding}) {
+                $et->WarnOnce("Can't currently decode encoded $type metadata");
+                next;
+            }
+            if ($$item{ProtectionIndex}) {
+                $et->WarnOnce("Can't currently decode protected $type metadata");
+                next;
+            }
+            if ($$item{ConstructionMethod}) {
+                $et->WarnOnce("Can't currently extract $type with construction method $$item{ConstructionMethod}");
+                next;
+            }
+            next if $$item{DataReferenceIndex}; # (can only extract information from "this file")
+            my ($extent, $proc);
+            my $base = $$item{BaseOffset} || 0;
+            undef $buff;
+            my $val = '';
+            foreach $extent (@{$$item{Extents}}) {
+                $val .= $buff if defined $buff;
+                $raf->Seek($$extent[1] + $base, 0) or last;
+                $raf->Read($buff, $$extent[2]) or last;
+            }
+            next unless defined $buff;
+            $buff = $val . $buff if length $val;
+            my $start = $type eq 'Exif' ? 10 : 0; # skip count and "Exif\0\0" header
+            my $pos = $$item{Extents}[0][1] + $base;
+            my %dirInfo = (
+                DataPt   => \$buff,
+                DataLen  => length $buff,
+                DirStart => $start,
+                DirLen   => length($buff) - $start,
+                DataPos  => $pos,
+                Base     => $pos, # (needed for IsOffset tags in binary data)
+            );
+            # handle processing of metadata for sub-documents
+            if (defined $primary and $$item{RefersTo} and not $$item{RefersTo}{$primary}) {
+                # set document number if this doesn't refer to the primary document
+                $$et{DOC_NUM} = ++$$et{DOC_COUNT};
+                # associate this document number with the lowest item index
+                my ($lowest) = sort { $a <=> $b } keys %{$$item{RefersTo}};
+                $$items{$lowest}{DocNum} = $$et{DOC_NUM};
+            }
+            my $subTable = GetTagTable('Image::ExifTool::' . $type . '::Main');
+            $proc = \&Image::ExifTool::ProcessTIFF if $type eq 'Exif';
+            $et->ProcessDirectory(\%dirInfo, $subTable, $proc);
+            delete $$et{DOC_NUM};
+        }
+        $raf->Seek($curPos, 0);     # seek back to original position
+    }
+    # process the item properties now that we should know their associations and document numbers
+    if ($$et{ItemPropertyContainer}) {
+        my ($dirInfo, $subTable, $proc) = @{$$et{ItemPropertyContainer}};
+        $$et{IsItemProperty} = 1;   # set item property flag
+        $et->ProcessDirectory($dirInfo, $subTable, $proc);
+        delete $$et{ItemPropertyContainer};
+        delete $$et{IsItemProperty};
+        delete $$et{DOC_NUM};
+    }
+    delete $$et{ItemInfo};
+}
+
+#------------------------------------------------------------------------------
 # Process MPEG-4 MTDT atom (ref 11)
 # Inputs: 0) ExifTool object ref, 1) dirInfo ref, 2) tag table ref
 # Returns: 1 on success
@@ -6135,7 +6635,7 @@ sub ProcessKeys($$$)
         if ($ns eq 'mdta') {
             $tag =~ s/^com\.apple\.quicktime\.//;   # remove common apple quicktime domain
         }
-        next unless $tag;
+        $tag = "Tag_$ns" unless $tag;
         # (I have some samples where the tag is a reversed ItemList or UserData tag ID)
         my $tagInfo = $et->GetTagInfo($tagTablePtr, $tag);
         unless ($tagInfo) {
@@ -6199,7 +6699,10 @@ sub ProcessMOV($$;$)
     my $verbose = $et->Options('Verbose');
     my $dataPos = $$dirInfo{Base} || 0;
     my $charsetQuickTime = $et->Options('CharsetQuickTime');
-    my ($buff, $tag, $size, $track, $isUserData, %triplet, $doDefaultLang);
+    my ($buff, $tag, $size, $track, $isUserData, %triplet, $doDefaultLang, $index);
+
+    my $topLevel = not $$et{InQuickTime};
+    $$et{InQuickTime} = 1;
 
     unless (defined $$et{KeyCount}) {
         $$et{KeyCount} = 0;     # initialize ItemList key directory count
@@ -6252,6 +6755,7 @@ sub ProcessMOV($$;$)
         SetByteOrder('MM');
         $$et{PRIORITY_DIR} = 'XMP';   # have XMP take priority
     }
+    $index = $$tagTablePtr{VARS}{START_INDEX} if $$tagTablePtr{VARS};
     for (;;) {
         if ($size < 8) {
             if ($size == 0) {
@@ -6352,6 +6856,40 @@ sub ProcessMOV($$;$)
             }
         }
         if (defined $tagInfo and not $ignore) {
+            # set document number for this item property if necessary
+            if ($$et{IsItemProperty}) {
+                my $items = $$et{ItemInfo};
+                my ($id, $prop, $mainItem, $docNum, $lowest);
+                my $primary = $$et{PrimaryItem} || 0;
+ItemID:         foreach $id (keys %$items) {
+                    next unless $$items{$id}{Association};
+                    my $item = $$items{$id};
+                    foreach $prop (@{$$item{Association}}) {
+                        next unless $prop == $index;
+                        if ($id == $primary or (not $$item{RefersTo} or $$item{RefersTo}{$primary})) {
+                            # this is associated with the primary item or an item describing
+                            # the primary item, so consider this part of the main document
+                            undef $docNum;
+                            undef $lowest;
+                            last ItemID;
+                        } elsif ($$item{DocNum}) {
+                            # this property is already associated with an item that has
+                            # an ExifTool document number, so use the lowest assocated DocNum
+                            $docNum = $$item{DocNum} if not defined $docNum or $docNum > $$item{DocNum};
+                        } elsif (not defined $lowest or $lowest > $id) {
+                            # keep track of the lowest associated item ID
+                            $lowest = $id;
+                        }
+                    }
+                }
+                if (not defined $docNum and defined $lowest) {
+                    # this is the first time we've seen metadata from this item,
+                    # so use a new document number
+                    $docNum = ++$$et{DOC_COUNT};
+                    $$items{$lowest}{DocNum} = $docNum;
+                }
+                $$et{DOC_NUM} = $docNum;
+            }
             my $val;
             my $missing = $size - $raf->Read($val, $size);
             if ($missing) {
@@ -6372,6 +6910,7 @@ sub ProcessMOV($$;$)
                     DataPos => $dataPos,
                     Size    => $size,
                     Format  => $tagInfo ? $$tagInfo{Format} : undef,
+                    Index   => $index,
                 );
             }
             # handle iTunesInfo mean/name/data triplets
@@ -6442,9 +6981,19 @@ sub ProcessMOV($$;$)
                     my $proc = $$subdir{ProcessProc};
                     # make ProcessMOV() the default processing procedure for subdirectories
                     $proc = \&ProcessMOV unless $proc or $$subTable{PROCESS_PROC};
-                    $et->ProcessDirectory(\%dirInfo, $subTable, $proc) if $size > $start;
+                    if ($size > $start) {
+                        # delay processing of ipco box until after all other boxes
+                        if ($tag eq 'ipco' and not $$et{IsItemProperty}) {
+                            $$et{ItemPropertyContainer} = [ \%dirInfo, $subTable, $proc ];
+                            $et->VPrint(0,"$$et{INDENT}\[Process ipco box later]");
+                        } else {
+                            $et->ProcessDirectory(\%dirInfo, $subTable, $proc);
+                        }
+                    }
                     $$et{SET_GROUP1} = $oldGroup1;
                     SetByteOrder('MM');
+                    # handle metadata now if iwe just processed the 'meta' box
+                    HandleItemInfo($et, $raf) if $tag eq 'meta';
                 } elsif ($hasData) {
                     # handle atoms containing 'data' tags
                     # (currently ignore contained atoms: 'itif', 'name', etc.)
@@ -6530,6 +7079,7 @@ sub ProcessMOV($$;$)
                             Start   => $pos,
                             Size    => $len,
                             Format  => $format,
+                            Index   => $index,
                             Extra   => sprintf(", Type='$type', Flags=0x%x",$flags)
                         ) if $verbose;
                         $et->FoundTag($langInfo, $value) if defined $value;
@@ -6618,6 +7168,7 @@ sub ProcessMOV($$;$)
         $raf->Read($buff, 8) == 8 or last;
         $dataPos += $size + 8;
         ($size, $tag) = unpack('Na4', $buff);
+        ++$index if defined $index;
     }
     # fill in missing defaults for alternate language tags
     # (the first language is taken as the default)
@@ -6638,6 +7189,7 @@ QTLang: foreach $tag (@{$$et{QTLang}}) {
         }
         delete $$et{QTLang};
     }
+    HandleItemInfo($et, $raf) if $topLevel;
     return 1;
 }
 
@@ -6656,5 +7208,5 @@ sub ProcessQTIF($$)
 
 __END__
 
-#line 6708
+#line 7260
 

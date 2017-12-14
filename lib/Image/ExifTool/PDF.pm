@@ -22,13 +22,14 @@ use vars qw($VERSION $AUTOLOAD $lastFetched);
 use Image::ExifTool qw(:DataAccess :Utils);
 require Exporter;
 
-$VERSION = '1.41';
+$VERSION = '1.43';
 
 sub FetchObject($$$$);
 sub ExtractObject($$;$$);
 sub ReadToNested($;$);
 sub ProcessDict($$$$;$$);
 sub ProcessAcroForm($$$$;$$);
+sub ExpandArray($);
 sub ReadPDFValue($);
 sub CheckPDF($$$);
 
@@ -1705,6 +1706,22 @@ sub ProcessAcroForm($$$$;$$)
 }
 
 #------------------------------------------------------------------------------
+# Expand array into a string
+# Inputs: 0) array ref
+# Return: string
+sub ExpandArray($)
+{
+    my $val = shift;
+    my @list = @$val;
+    foreach (@list) {
+        ref $_ eq 'SCALAR' and $_ = "ref($$_)", next;
+        ref $_ eq 'ARRAY' and $_ = ExpandArray($_), next;
+        defined $_ or $_ = '<undef>', next;
+    }
+    return '[' . join(',',@list) . ']';
+}
+
+#------------------------------------------------------------------------------
 # Process PDF dictionary extract tag values
 # Inputs: 0) ExifTool object reference, 1) tag table reference
 #         2) dictionary reference, 3) cross-reference table reference,
@@ -1824,14 +1841,7 @@ sub ProcessDict($$$$;$$)
                     SubDirectory => { TagTable => 'Image::ExifTool::PDF::Unknown' },
                 };
             } else {
-                if (ref $val eq 'ARRAY') {
-                    my @list = @$val;
-                    foreach (@list) {
-                        $_ = "ref($$_)" if ref $_ eq 'SCALAR';
-                        $_ = '<undef>' unless defined $_;
-                    }
-                    $val2 = '[' . join(',',@list) . ']';
-                }
+                $val2 = ExpandArray($val) if ref $val eq 'ARRAY';
                 # generate tag info if we will use it later
                 if (not $tagInfo and defined $val and $unknown) {
                     $tagInfo = NewPDFTag($tagTablePtr, $tag);
@@ -2115,8 +2125,9 @@ sub ReadPDF($$)
     $len = 1024 if $len > 1024;
     $raf->Seek(-$len, 2) or return -2;
     $raf->Read($buff, $len) == $len or return -3;
-    # find the LAST xref table in the file (may be multiple %%EOF marks)
-    $buff =~ /^.*startxref(\s+)(\d+)(\s+)%%EOF/s or return -4;
+    # find the LAST xref table in the file (may be multiple %%EOF marks,
+    # and comments between "startxref" and "%%EOF")
+    $buff =~ /^.*startxref(\s+)(\d+)(\s+)(%[^\x0d\x0a]*\s+)*%%EOF/s or return -4;
     my $ws = $1 . $3;
     my $xr = $2;
     push @xrefOffsets, $xr, 'Main';
@@ -2319,4 +2330,4 @@ sub ProcessPDF($$)
 
 __END__
 
-#line 2368
+#line 2379

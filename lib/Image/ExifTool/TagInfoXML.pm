@@ -12,15 +12,15 @@ package Image::ExifTool::TagInfoXML;
 use strict;
 require Exporter;
 
-use vars qw($VERSION @ISA);
+use vars qw($VERSION @ISA $makeMissing);
 use Image::ExifTool qw(:Utils :Vars);
 use Image::ExifTool::XMP;
 
-$VERSION = '1.28';
+$VERSION = '1.30';
 @ISA = qw(Exporter);
 
 # set this to a language code to generate Lang module with 'MISSING' entries
-my $makeMissing = '';
+$makeMissing = '';
 
 sub LoadLangModules($;$);
 sub WriteLangModule($$;$);
@@ -205,6 +205,8 @@ PTILoop:    for ($index=0; $index<@infoArray; ++$index) {
                     # short output format
                     print $fp "/>\n";   # empty tag element
                     next;               # no descriptions or values
+                } else {
+                    print $fp ">";
                 }
                 my $desc = $$tagInfo{Description};
                 $desc = Image::ExifTool::MakeDescription($name) unless defined $desc;
@@ -226,7 +228,7 @@ PTILoop:    for ($index=0; $index<@infoArray; ++$index) {
                 # print tag descriptions
                 $desc = Image::ExifTool::XMP::EscapeXML($desc);
                 unless ($opts{Lang} and $altDescr) {
-                    print $fp ">\n  <desc lang='$defaultLang'>$desc</desc>";
+                    print $fp "\n  <desc lang='$defaultLang'>$desc</desc>";
                 }
                 print $fp "$altDescr\n";
                 for (my $i=0; ; ++$i) {
@@ -390,6 +392,7 @@ sub BuildLangModules($;$)
                 if ($makeMissing and $lang eq 'en') {
                     $lang = $makeMissing;
                     $val = 'MISSING';
+                    undef $cap;
                 }
                 my $isDefault = ($lang eq $Image::ExifTool::defaultLang);
                 unless ($langInfo{$lang} or $isDefault) {
@@ -715,4 +718,4 @@ sub NumbersFirst
 
 __END__
 
-#line 828
+#line 831

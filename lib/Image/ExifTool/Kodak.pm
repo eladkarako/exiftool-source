@@ -25,7 +25,7 @@ use vars qw($VERSION);
 use Image::ExifTool qw(:DataAccess :Utils);
 use Image::ExifTool::Exif;
 
-$VERSION = '1.41';
+$VERSION = '1.42';
 
 sub ProcessKodakIFD($$$);
 sub ProcessKodakText($$$);
@@ -190,6 +190,7 @@ sub WriteKodakIFD($$$);
             1 => 'Flash?',
             2 => 'Tungsten',
             3 => 'Daylight',
+            # 5 - seen this for "Auto" with a ProBack 645M
         },
     },
     0x5c => {
@@ -1528,12 +1529,14 @@ my %sceneModeUsed = (
     'Exposure Mode' => {
         Name => 'ExposureMode',
         PrintConv => {
+            OTHER => sub { shift }, # pass other values straight through
             'M' => 'Manual',
             'A' => 'Aperture Priority', #(NC -- I suppose this could be "Auto" too)
             'S' => 'Shutter Priority', #(NC)
             'P' => 'Program', #(NC)
             'B' => 'Bulb', #(NC)
             # have seen "Manual (M)" written by DCS760C - PH
+            # and "Aperture priority AE (Av)" written by a ProBack 645M
         },
     },
     'Firmware Version' => 'FirmwareVersion',
@@ -2055,4 +2058,4 @@ sub WriteKodakIFD($$$)
 
 __END__
 
-#line 2097
+#line 2100

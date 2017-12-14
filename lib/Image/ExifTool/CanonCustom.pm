@@ -20,7 +20,7 @@ use Image::ExifTool qw(:DataAccess);
 use Image::ExifTool::Canon;
 use Image::ExifTool::Exif;
 
-$VERSION = '1.53';
+$VERSION = '1.54';
 
 sub ProcessCanonCustom($$$);
 sub ProcessCanonCustom2($$$);
@@ -2445,7 +2445,7 @@ sub ProcessCanonCustom2($$$)
         $newTags = $et->GetNewTagInfoHash($tagTablePtr);
         $et->VPrint(0, "  Rewriting CanonCustom2\n");
     } elsif ($verbose) {
-        $et->VerboseDir('CanonCustom2', $count);
+        $et->VerboseDir('CanonCustom2', $count, $len);
     }
     my $pos = $offset + 8;
     my $end = $offset + $size;
@@ -2464,7 +2464,7 @@ sub ProcessCanonCustom2($$$)
             return 0;
         }
         if ($verbose and not $write) {
-            $et->VerboseDir("CanonCustom2 group $recNum", $recCount);
+            $et->VerboseDir("CanonCustom2 group $recNum", $recCount, $recLen);
         }
         my ($i, $num, $tag);
         for ($i=0; $recPos + 8 < $recEnd; ++$i, $recPos+=4*$num) {
@@ -2506,6 +2506,9 @@ sub ProcessCanonCustom2($$$)
         $pos = $recEnd;
     }
     if ($pos != $end) {
+        # Note: a firmware bug in the EOS M5 and M6 stores an incorrect
+        # size for the 2nd CanonCustom2 record, so this message is expected
+        # for these models...
         $et->Warn('Possibly corrupted CanonCustom2 data');
         return 0;
     }
@@ -2624,4 +2627,4 @@ sub WriteCanonCustom($$$)
 
 __END__
 
-#line 2668
+#line 2671

@@ -24,7 +24,7 @@ use strict;
 use vars qw($VERSION);
 use Image::ExifTool qw(:DataAccess :Utils);
 
-$VERSION = '1.30';
+$VERSION = '1.31';
 
 sub ProcessICC($$);
 sub ProcessICC_Profile($$$);
@@ -775,7 +775,7 @@ sub ProcessICC($$)
         return 1;
     }
     $raf->Seek(0, 0);
-    unless ($raf->Read($buff, $size)) {
+    unless ($raf->Read($buff, $size) == $size) {
         $et->Error('Truncated ICC profile');
         return 1;
     }
