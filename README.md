@@ -1131,7 +1131,9 @@
 
 <hr/>
 
-Here is the commandline-help (textual version) of v10.68:
+Here is the commandline-help (textual version) of v10.80:
+
+Note: <strong>You can use <code><a href="https://github.com/eladkarako/exiftool-source/commits/master/README.md">commits/master/README.md</a></code> to see the history, and the difference of this part (the commandline-help section) can give you a hint of the additions to the new version.</strong>
 <pre>
 NAME
     exiftool - Read and write meta information in files
@@ -1152,10 +1154,17 @@ RUNNING IN WINDOWS
     to the "Target" property of a Windows shortcut to the executable.
 
 SYNOPSIS
+  Reading
     exiftool [*OPTIONS*] [-*TAG*...] [--*TAG*...] *FILE*...
+
+  Writing
     exiftool [*OPTIONS*] -*TAG*[+-&lt;]=[*VALUE*]... *FILE*...
+
+  Copying
     exiftool [*OPTIONS*] -tagsFromFile *SRCFILE* [-*SRCTAG*[&gt;*DSTTAG*]...]
     *FILE*...
+
+  Other
     exiftool [ -ver | -list[w|f|r|wf|g[*NUM*]|d|x] ]
 
     For specific examples, see the EXAMPLES sections below.
@@ -1190,41 +1199,43 @@ DESCRIPTION
 
       File Types
       ------------+-------------+-------------+-------------+------------
-      3FR   r     | DVB   r/w   | KEY   r     | ORF   r/w   | RWL   r/w
-      3G2   r/w   | DYLIB r     | LA    r     | OTF   r     | RWZ   r
-      3GP   r/w   | EIP   r     | LFP   r     | PAC   r     | RM    r
-      AA    r     | EPS   r/w   | LNK   r     | PAGES r     | SEQ   r
-      AAX   r/w   | EPUB  r     | M2TS  r     | PBM   r/w   | SO    r
-      ACR   r     | ERF   r/w   | M4A/V r/w   | PCD   r     | SR2   r/w
-      AFM   r     | EXE   r     | MEF   r/w   | PDB   r     | SRF   r
-      AI    r/w   | EXIF  r/w/c | MIE   r/w/c | PDF   r/w   | SRW   r/w
-      AIFF  r     | EXR   r     | MIFF  r     | PEF   r/w   | SVG   r
-      APE   r     | EXV   r/w/c | MKA   r     | PFA   r     | SWF   r
-      ARW   r/w   | F4A/V r/w   | MKS   r     | PFB   r     | THM   r/w
-      ASF   r     | FFF   r/w   | MKV   r     | PFM   r     | TIFF  r/w
-      AVI   r     | FLA   r     | MNG   r/w   | PGF   r     | TORRENT r
-      AZW   r     | FLAC  r     | MOBI  r     | PGM   r/w   | TTC   r
-      BMP   r     | FLV   r     | MODD  r     | PLIST r     | TTF   r
-      BTF   r     | FPF   r     | MOI   r     | PICT  r     | VCF   r
-      CHM   r     | FPX   r     | MOS   r/w   | PMP   r     | VRD   r/w/c
-      COS   r     | GIF   r/w   | MOV   r/w   | PNG   r/w   | VSD   r
-      CR2   r/w   | GZ    r     | MP3   r     | PPM   r/w   | WAV   r
-      CRW   r/w   | HDP   r/w   | MP4   r/w   | PPT   r     | WDP   r/w
-      CS1   r/w   | HDR   r     | MPC   r     | PPTX  r     | WEBP  r
-      DCM   r     | HTML  r     | MPG   r     | PS    r/w   | WEBM  r
-      DCP   r/w   | ICC   r/w/c | MPO   r/w   | PSB   r/w   | WMA   r
-      DCR   r     | ICS   r     | MQV   r/w   | PSD   r/w   | WMV   r
-      DFONT r     | IDML  r     | MRW   r/w   | PSP   r     | WV    r
-      DIVX  r     | IIQ   r/w   | MXF   r     | QTIF  r/w   | X3F   r/w
-      DJVU  r     | IND   r/w   | NEF   r/w   | RA    r     | XCF   r
-      DLL   r     | INX   r     | NRW   r/w   | RAF   r/w   | XLS   r
-      DNG   r/w   | ITC   r     | NUMBERS r   | RAM   r     | XLSX  r
-      DOC   r     | J2C   r     | ODP   r     | RAR   r     | XMP   r/w/c
-      DOCX  r     | JNG   r/w   | ODS   r     | RAW   r/w   | ZIP   r
-      DPX   r     | JP2   r/w   | ODT   r     | RIFF  r     |
-      DR4   r/w/c | JPEG  r/w   | OFR   r     | RSRC  r     |
-      DSS   r     | K25   r     | OGG   r     | RTF   r     |
-      DV    r     | KDC   r     | OGV   r     | RW2   r/w   |
+      3FR   r     | DVB   r/w   | JPEG  r/w   | ODT   r     | RIFF  r
+      3G2   r/w   | DYLIB r     | JSON  r     | OFR   r     | RSRC  r
+      3GP   r/w   | EIP   r     | K25   r     | OGG   r     | RTF   r
+      A     r     | EPS   r/w   | KDC   r     | OGV   r     | RW2   r/w
+      AA    r     | EPUB  r     | KEY   r     | OPUS  r     | RWL   r/w
+      AAX   r/w   | ERF   r/w   | LA    r     | ORF   r/w   | RWZ   r
+      ACR   r     | EXE   r     | LFP   r     | OTF   r     | RM    r
+      AFM   r     | EXIF  r/w/c | LNK   r     | PAC   r     | SEQ   r
+      AI    r/w   | EXR   r     | M2TS  r     | PAGES r     | SO    r
+      AIFF  r     | EXV   r/w/c | M4A/V r/w   | PBM   r/w   | SR2   r/w
+      APE   r     | F4A/V r/w   | MAX   r     | PCD   r     | SRF   r
+      ARW   r/w   | FFF   r/w   | MEF   r/w   | PDB   r     | SRW   r/w
+      ASF   r     | FLA   r     | MIE   r/w/c | PDF   r/w   | SVG   r
+      AVI   r     | FLAC  r     | MIFF  r     | PEF   r/w   | SWF   r
+      AZW   r     | FLIF  r/w   | MKA   r     | PFA   r     | THM   r/w
+      BMP   r     | FLV   r     | MKS   r     | PFB   r     | TIFF  r/w
+      BPG   r     | FPF   r     | MKV   r     | PFM   r     | TORRENT r
+      BTF   r     | FPX   r     | MNG   r/w   | PGF   r     | TTC   r
+      CHM   r     | GIF   r/w   | MOBI  r     | PGM   r/w   | TTF   r
+      COS   r     | GPR   r/w   | MODD  r     | PLIST r     | VCF   r
+      CR2   r/w   | GZ    r     | MOI   r     | PICT  r     | VRD   r/w/c
+      CRW   r/w   | HDP   r/w   | MOS   r/w   | PMP   r     | VSD   r
+      CS1   r/w   | HDR   r     | MOV   r/w   | PNG   r/w   | WAV   r
+      DCM   r     | HEIC  r     | MP3   r     | PPM   r/w   | WDP   r/w
+      DCP   r/w   | HEIF  r     | MP4   r/w   | PPT   r     | WEBP  r
+      DCR   r     | HTML  r     | MPC   r     | PPTX  r     | WEBM  r
+      DFONT r     | ICC   r/w/c | MPG   r     | PS    r/w   | WMA   r
+      DIVX  r     | ICS   r     | MPO   r/w   | PSB   r/w   | WMV   r
+      DJVU  r     | IDML  r     | MQV   r/w   | PSD   r/w   | WV    r
+      DLL   r     | IIQ   r/w   | MRW   r/w   | PSP   r     | X3F   r/w
+      DNG   r/w   | IND   r/w   | MXF   r     | QTIF  r/w   | XCF   r
+      DOC   r     | INX   r     | NEF   r/w   | R3D   r     | XLS   r
+      DOCX  r     | ISO   r     | NRW   r/w   | RA    r     | XLSX  r
+      DPX   r     | ITC   r     | NUMBERS r   | RAF   r/w   | XMP   r/w/c
+      DR4   r/w/c | J2C   r     | O     r     | RAM   r     | ZIP   r
+      DSS   r     | JNG   r/w   | ODP   r     | RAR   r     |
+      DV    r     | JP2   r/w   | ODS   r     | RAW   r/w   |
 
       Meta Information
       ----------------------+----------------------+---------------------
@@ -1259,7 +1270,7 @@ OPTIONS
     Tag operations
 
       -TAG or --TAG                    Extract or exclude specified tag
-      -TAG[+-]=[VALUE]                 Write new value for tag
+      -TAG[+-^]=[VALUE]                Write new value for tag
       -TAG[+-]&lt;=DATFILE                Write tag value from contents of file
       -TAG[+-]&lt;SRCTAG                  Copy tag value (see -tagsFromFile)
 
@@ -1272,7 +1283,7 @@ OPTIONS
       -b          (-binary)            Output metadata in binary format
       -c FMT      (-coordFormat)       Set format for GPS coordinates
       -charset [[TYPE=]CHARSET]        Specify encoding for special characters
-      -csv[=CSVFILE]                   Export/import tags in CSV format
+      -csv[[+]=CSVFILE]                Export/import tags in CSV format
       -d FMT      (-dateFormat)        Set format for date/time values
       -D          (-decimal)           Show tag ID numbers in decimal
       -E, -ex     (-escape(HTML|XML))  Escape values for HTML (-E) or XML (-ex)
@@ -1280,14 +1291,14 @@ OPTIONS
       -g[NUM...]  (-groupHeadings)     Organize output by tag group
       -G[NUM...]  (-groupNames)        Print group name for each tag
       -h          (-htmlFormat)        Use HMTL formatting for output
-      -H          (-hex)               Show tag ID number in hexadecimal
+      -H          (-hex)               Show tag ID numbers in hexadecimal
       -htmlDump[OFFSET]                Generate HTML-format binary dump
-      -j[=JSONFILE] (-json)            Export/import tags in JSON format
+      -j[[+]=JSONFILE] (-json)         Export/import tags in JSON format
       -l          (-long)              Use long 2-line output format
       -L          (-latin)             Use Windows Latin1 encoding
       -lang [LANG]                     Set current language
       -listItem INDEX                  Extract specific item from a list
-      -n          (--printConv)        Read/write numerical tag values
+      -n          (--printConv)        No print conversion
       -p FMTFILE  (-printFormat)       Print output in specified format
       -php                             Export tags as a PHP Array
       -s[NUM]     (-short)             Short output format
@@ -1308,7 +1319,7 @@ OPTIONS
       -a          (-duplicates)        Allow duplicate tags to be extracted
       -e          (--composite)        Do not calculate composite tags
       -ee         (-extractEmbedded)   Extract information from embedded files
-      -ext EXT    (-extension)         Process files with specified extension
+      -ext[+] EXT (-extension)         Process files with specified extension
       -F[OFFSET]  (-fixBase)           Fix the base for maker notes offsets
       -fast[NUM]                       Increase speed for slow devices
       -fileOrder [-]TAG                Set file processing order
@@ -1318,9 +1329,9 @@ OPTIONS
       -o OUTFILE  (-out)               Set output file or directory name
       -overwrite_original              Overwrite original by renaming tmp file
       -overwrite_original_in_place     Overwrite original by copying tmp file
-      -P          (-preserve)          Preserve date/time of original file
+      -P          (-preserve)          Preserve file modification date/time
       -password PASSWD                 Password for processing protected files
-      -progress                        Show file progress count
+      -progress[:[TITLE]]              Show file progress count
       -q          (-quiet)             Quiet processing
       -r[.]       (-recurse)           Recursively process subdirectories
       -scanForXMP                      Brute force XMP scan
@@ -1349,14 +1360,14 @@ OPTIONS
 
     Advanced options
 
-      -api OPT[=VAL]                   Set ExifTool API option
+      -api OPT[[^]=[VAL]]              Set ExifTool API option
       -common_args                     Define common arguments
       -config CFGFILE                  Specify configuration file name
       -echo[NUM] TEXT                  Echo text to stdout or stderr
       -execute[NUM]                    Execute multiple commands on one line
-      -srcfile FMT                     Set different source file name
+      -srcfile FMT                     Process a different source file
       -stay_open FLAG                  Keep reading -@ argfile even after EOF
-      -userParam PARAM[=VAL]           Set user parameter (API UserParam opt)
+      -userParam PARAM[[^]=[VAL]]      Set user parameter (API UserParam opt)
 
   Option Details
    Tag operations
@@ -1372,10 +1383,10 @@ OPTIONS
          by family.
 
          A special tag name of "All" may be used to indicate all meta
-         information. This is particularly useful when a group name is
-         specified to extract all information in a group (but beware that
-         unless the -a option is also used, some tags in the group may be
-         suppressed by same-named tags in other groups). The wildcard
+         information (ie. -All). This is particularly useful when a group
+         name is specified to extract all information in a group (but beware
+         that unless the -a option is also used, some tags in the group may
+         be suppressed by same-named tags in other groups). The wildcard
          characters "?" and "*" may be used in a tag name to match any
          single character and zero or more characters respectively. These
          may not be used in a group name, with the exception that a group
@@ -1409,14 +1420,17 @@ OPTIONS
          4 below). Instead, individual tags may be recovered using the
          -tagsFromFile option (eg. "-all= -tagsfromfile @ -artist").
 
-    -*TAG*[+-]=[*VALUE*]
+    -*TAG*[+-^]=[*VALUE*]
          Write a new value for the specified tag (eg. "-comment=wow"), or
          delete the tag if no *VALUE* is given (eg. "-comment="). "+=" and
          "-=" are used to add or remove existing entries from a list, or to
-         shift date/time values (see Image::ExifTool::Shift.pl for details).
-         "+=" may also be used to increment numerical values, and "-=" may
-         be used to conditionally delete or replace a tag (see "WRITING
-         EXAMPLES" for examples).
+         shift date/time values (see Image::ExifTool::Shift.pl and note 6
+         below for more details). "+=" may also be used to increment
+         numerical values (or decrement if *VALUE* is negative), and "-="
+         may be used to conditionally delete or replace a tag (see "WRITING
+         EXAMPLES" for examples). "^=" is used to write an empty string
+         instead of deleting the tag when no *VALUE* is given, but otherwise
+         it is equivalent to "=".
 
          *TAG* may contain one or more leading family 0, 1 or 2 group names,
          prefixed by optional family numbers, and separated colons. If no
@@ -1427,19 +1441,19 @@ OPTIONS
 
          The wildcards "*" and "?" may be used in tag names to assign the
          same value to multiple tags. When specified with wildcards,
-         "unsafe" tags are not written. A tag name of "All" is eqivalent to
+         "unsafe" tags are not written. A tag name of "All" is equivalent to
          "*" (except that it doesn't require quoting, while arguments with
          wildcards do on systems with shell globbing), and is often used
          when deleting all metadata (ie. "-All=") or an entire group (eg.
-         "-GROUP:All=", see note 4 below). Note that not all groups are
+         "-XMP-dc:All=", see note 4 below). Note that not all groups are
          deletable, and that the JPEG APP14 "Adobe" group is not removed by
          default with "-All=" because it may affect the appearance of the
-         image. However, this will remove color space information, so the
-         colors may be affected (but this may be avoided by copying back the
-         tags defined by the ColorSpaceTags shortcut). Use the -listd option
-         for a complete list of deletable groups, and see note 5 below
-         regarding the "APP" groups. Also, within an image some groups may
-         be contained within others, and these groups are removed if the
+         image. However, color space information is removed, so the colors
+         may be affected (but this may be avoided by copying back the tags
+         defined by the ColorSpaceTags shortcut). Use the -listd option for
+         a complete list of deletable groups, and see note 5 below regarding
+         the "APP" groups. Also, within an image some groups may be
+         contained within others, and these groups are removed if the
          containing group is deleted:
 
            JPEG Image:
@@ -1464,9 +1478,10 @@ OPTIONS
          with OEM software which may be very inflexible about the
          information it expects to find in the maker notes.
 
-         3) Changes to PDF files are reversible because the original
-         information is never actually deleted from the file. So ExifTool
-         alone may not be used to securely edit metadata in PDF files.
+         3) Changes to PDF files by ExifTool are reversible (by deleting the
+         update with "-PDF-update:all=") because the original information is
+         never actually deleted from the file. So ExifTool alone may not be
+         used to securely edit metadata in PDF files.
 
          4) Specifying "-GROUP:all=" deletes the entire group as a block
          only if a single family 0 or 1 group is specified. Otherwise all
@@ -1483,6 +1498,12 @@ OPTIONS
          another deletable group. For example, specifying "-APP14:All=" will
          NOT delete the APP14 "Adobe" segment because this is accomplished
          with "-Adobe:All".
+
+         6) When shifting a value, the shift is applied to the original
+         value of the tag, overriding any other values previously assigned
+         to the tag on the same command line. To shift a date/time value and
+         copy it to another tag in the same operation, use the
+         -globalTimeShift option.
 
          Special feature: Integer values may be specified in hexadecimal
          with a leading "0x", and simple rational values may be specified as
@@ -1532,7 +1553,9 @@ OPTIONS
          then copied from each file in turn as it is rewritten. For advanced
          batch use, the source file name may also be specified using a *FMT*
          string in which %d, %f and %e represent the directory, file name
-         and extension of *FILE*. See -w option for *FMT* string examples.
+         and extension of *FILE*. (eg. the current *FILE* would be
+         represented by "%d%f.%e", with the same effect as "@"). See the -w
+         option for *FMT* string examples.
 
          A powerful redirection feature allows a destination tag to be
          specified for each copied tag. With this feature, information may
@@ -1556,13 +1579,15 @@ OPTIONS
          An extension of the redirection feature allows strings involving
          tag names to be used on the right hand side of the "&lt;" symbol with
          the syntax "-*DSTTAG*&lt;*STR*", where tag names in *STR* are prefixed
-         with a "$" symbol. See the -p option for more details about this
-         syntax. Strings starting with a "=" sign must insert a single space
-         after the "&lt;" to avoid confusion with the "&lt;=" operator which sets
-         the tag value from the contents of a file. A single space at the
-         start of the string is removed if it exists, but all other
-         whitespace in the string is preserved.  See note 8 below about
-         using shortcuts or wildcards with the redirection feature.
+         with a "$" symbol. See the -p option and the "Advanced formatting
+         feature" section for more details about this syntax. Strings
+         starting with a "=" sign must insert a single space after the "&lt;"
+         to avoid confusion with the "&lt;=" operator which sets the tag value
+         from the contents of a file. A single space at the start of the
+         string is removed if it exists, but all other whitespace in the
+         string is preserved. See note 8 below about using the redirection
+         feature with list-type stags, shortcuts or when using wildcards in
+         tag names.
 
          See "COPYING EXAMPLES" for examples using -tagsFromFile.
 
@@ -1580,7 +1605,8 @@ OPTIONS
 
          3) The maker note information is copied as a block, so it isn't
          affected like other information by subsequent tag assignments on
-         the command line. Also, since the PreviewImage referenced from the
+         the command line, and individual makernote tags may not be excluded
+         from a block copy. Also, since the PreviewImage referenced from the
          maker notes may be rather large, it is not copied, and must be
          transferred separately if desired.
 
@@ -1596,19 +1622,23 @@ OPTIONS
          copied and assigned tags because later operations may override
          earlier ones.
 
-         5) The normal behaviour of copied tags differs subtly from that of
-         assigned tags for list-type tags. When copying to a list, each
-         copied tag overrides any previous operations on the list. While
-         this avoids duplicate list items when copying groups of tags from a
-         file containing redundant information, it also prevents values of
-         different tags from being copied into the same list when this is
-         the intent. So a -addTagsFromFile option is provided which allows
-         copying of multiple tags into the same list. eg)
+         5) The normal behaviour of copied tags differs from that of
+         assigned tags for list-type tags and conditional replacements
+         because each copy operation on a tag overrides any previous
+         operations. While this avoids duplicate list items when copying
+         groups of tags from a file containing redundant information, it
+         also prevents values of different tags from being copied into the
+         same list when this is the intent. So a -addTagsFromFile option is
+         provided which allows copying of multiple tags into the same list.
+         eg)
 
              exiftool -addtagsfromfile @ "-subject&lt;make" "-subject&lt;model" ...
 
-         Other than this difference, the -tagsFromFile and -addTagsFromFile
-         options are equivalent.
+         Similarly, -addTagsFromFile must be used when conditionally
+         replacing a tag to prevent overriding earlier conditions.
+
+         Other than these differences, the -tagsFromFile and
+         -addTagsFromFile options are equivalent.
 
          6) The -a option (allow duplicate tags) is always in effect when
          copying tags from *SRCFILE*.
@@ -1617,13 +1647,16 @@ OPTIONS
          -struct option for details.
 
          8) With the redirection feature, copying a tag directly (ie.
-         "-*DSTTAG*&lt;*SRCTAG*") is not the same as interpolating its value
-         inside a string (ie. "-*DSTTAG*&lt;$*SRCTAG*") for shortcut tags or
-         tag names containing wildcards. When copying directly, the values
-         of each matching source tag are copied individually to the
-         destination tag (as if multiple redirection arguments were used).
-         However, when interpolated inside a string, the values of shortcut
-         tags are concatenated, and wildcards are not allowed.
+         "'-*DSTTAG*&lt;*SRCTAG*'") is not the same as interpolating its value
+         inside a string (ie. "'-*DSTTAG*&lt;$*SRCTAG*'") for list-type tags,
+         shortcut tags, or tag names containing wildcards. When copying
+         directly, the values of each matching source tag are copied
+         individually to the destination tag (as if they were separate
+         assignments). However, when interpolated inside a string, list
+         items and the values of shortcut tags are concatenated (with a
+         separator set by the -sep option), and wildcards are not allowed.
+         Also, UserParam variables are available only when interpolated in a
+         string.
 
     -x *TAG* (-exclude)
          Exclude the specified tag. There may be multiple -x options. This
@@ -1643,7 +1676,7 @@ OPTIONS
          example):
 
              exiftool -args -G1 --filename --directory src.jpg &gt; out.args
-             exiftool -@ out.args dst.jpg
+             exiftool -@ out.args -sep ", " dst.jpg
 
          Note: Be careful when copying information with this technique since
          it is easy to write tags which are normally considered "unsafe".
@@ -1652,17 +1685,19 @@ OPTIONS
          Also note that the second command above will produce warning
          messages for any tags which are not writable.
 
-         As well, the -sep option should be used when reading back to
-         maintain separate list items, and the -struct option may be used
-         when extracting to preserve structured XMP information.
+         As well, the -sep option should be used as in the second command
+         above to maintain separate list items when writing metadata back to
+         image files, and the -struct option may be used when extracting to
+         preserve structured XMP information.
 
     -b (-binary)
          Output requested metadata in binary format without tag names or
          descriptions. This option is mainly used for extracting embedded
          images or other binary data, but it may also be useful for some
          text strings since control characters (such as newlines) are not
-         replaced by '.' as they are in the default output. List items are
-         separated by a newline when extracted with the -b option. May be
+         replaced by '.' as they are in the default output. By default, list
+         items are separated by a newline when extracted with the -b option,
+         but this may be changed (see the -sep option for details). May be
          combined with "-j", "-php" or "-X" to extract binary data in JSON,
          PHP or XML format.
 
@@ -1712,6 +1747,8 @@ OPTIONS
              Baltic      cp1257           Windows Baltic
              Vietnam     cp1258           Windows Vietnamese
              Thai        cp874            Windows Thai
+             DOSLatinUS  cp437            DOS Latin US
+             DOSLatin1   cp850            DOS Latin1
              MacRoman    cp10000, Roman   Macintosh Roman
              MacLatin2   cp10029          Macintosh Latin2 (Central Europe)
              MacCyrillic cp10007          Macintosh Cyrillic
@@ -1738,11 +1775,14 @@ OPTIONS
                          IPTC:CodedCharacterSet is not defined
              Photoshop  Internal encoding of Photoshop IRB strings   Latin
              QuickTime  Internal encoding of QuickTime strings       MacRoman
+             RIFF       Internal encoding of RIFF strings            0
 
          See &lt;http://owl.phy.queensu.ca/~phil/exiftool/faq.html#Q10&gt; for
-         more information about coded character sets.
+         more information about coded character sets, and the
+         Image::ExifTool Options for more details about the -charset
+         settings.
 
-    -csv[=*CSVFILE*]
+    -csv[[+]=*CSVFILE*]
          Export information in CSV format, or import information if
          *CSVFILE* is specified. When importing, the CSV file must be in
          exactly the same format as the exported file. The first row of the
@@ -1750,8 +1790,10 @@ OPTIONS
          names) for each column of the file, and values must be separated by
          commas. A special "SourceFile" column specifies the files
          associated with each row of information (and a SourceFile of "*"
-         may be used to define default tags to be imported for all files).
-         The following examples demonstrate basic use of this option:
+         may be used to define default tags to be imported for all files
+         which are combined with any tags specified for the specific
+         SourceFile processed). The following examples demonstrate basic use
+         of this option:
 
              # generate CSV file with common tags from all images in a directory
              exiftool -common -csv dir &gt; out.csv
@@ -1759,17 +1801,19 @@ OPTIONS
              # update metadata for all images in a directory from CSV file
              exiftool -csv=a.csv dir
 
-         Empty values are ignored when importing. Also, FileName and
-         Directory columns are ignored if they exist (ie. ExifTool will not
-         attempt to write these tags with a CSV import). To force a tag to
-         be deleted, use the -f option and set the value to "-" in the CSV
-         file (or to the MissingTagValue if this API option was used).
-         Multiple databases may be imported in a single command.
+         Empty values are ignored when importing (unless the -f option is
+         used and the API MissingTagValue is set to an empty string, in
+         which case the tag is deleted). Also, FileName and Directory
+         columns are ignored if they exist (ie. ExifTool will not attempt to
+         write these tags with a CSV import). To force a tag to be deleted,
+         use the -f option and set the value to "-" in the CSV file (or to
+         the MissingTagValue if this API option was used). Multiple
+         databases may be imported in a single command.
 
-         When exporting a CSV file, the -g or -G option to add group names
-         to the tag headings. If the -a option is used to allow duplicate
-         tag names, the duplicate tags are only included in the CSV output
-         if the column headings are unique. Adding the -G4 option ensures a
+         When exporting a CSV file, the -g or -G option adds group names to
+         the tag headings. If the -a option is used to allow duplicate tag
+         names, the duplicate tags are only included in the CSV output if
+         the column headings are unique. Adding the -G4 option ensures a
          unique column heading for each tag. When exporting specific tags,
          the CSV columns are arranged in the same order as the specified
          tags provided the column headings exactly match the specified tag
@@ -1794,14 +1838,16 @@ OPTIONS
          option incompatible with the -w option.
 
     -d *FMT* (-dateFormat)
-         Set the format for date/time tag values. The specifics of the *FMT*
-         syntax are system dependent -- consult the "strftime" man page on
-         your system for details. The default format is equivalent to
-         "%Y:%m:%d %H:%M:%S". This option has no effect on date-only or
-         time-only tags and ignores timezone information if present. Only
-         one -d option may be used per command. The inverse operation (ie.
-         un-formatting a date/time value) is currently not applied when
-         writing a date/time tag.
+         Set the format for date/time tag values. The *FMT* string may
+         contain formatting codes beginning with a percent character ("%")
+         to represent the various components of a date/time value. The
+         specifics of the *FMT* syntax are system dependent -- consult the
+         "strftime" man page on your system for details. The default format
+         is equivalent to "%Y:%m:%d %H:%M:%S". This option has no effect on
+         date-only or time-only tags and ignores timezone information if
+         present. Only one -d option may be used per command. Requires
+         POSIX::strptime or Time::Piece for the inversion conversion when
+         writing.
 
     -D (-decimal)
          Show tag ID number in decimal when extracting information.
@@ -1826,16 +1872,22 @@ OPTIONS
     -g[*NUM*][:*NUM*...] (-groupHeadings)
          Organize output by tag group. *NUM* specifies a group family
          number, and may be 0 (general location), 1 (specific location), 2
-         (category), 3 (document number) or 4 (instance number). Multiple
+         (category), 3 (document number) or 4 (instance number). -g0 is
+         assumed if a family number is not specified, and family numbers may
+         be added wherever -g is mentioned in the documentation. Multiple
          families may be specified by separating them with colons. By
          default the resulting group name is simplified by removing any
          leading "Main:" and collapsing adjacent identical group names, but
          this can be avoided by placing a colon before the first family
-         number (eg. -g:3:1). If *NUM* is not specified, -g0 is assumed. Use
-         the -listg option to list group names for a specified family.
+         number (eg. -g:3:1). Use the -listg option to list group names for
+         a specified family.
 
     -G[*NUM*][:*NUM*...] (-groupNames)
-         Same as -g but print group name for each tag.
+         Same as -g but print group name for each tag. -G0 is assumed if
+         *NUM* is not specified. May be combined with a number of other
+         options to add group names to the output. Note that *NUM* may be
+         added wherever -G is mentioned in the documentation. See the -g
+         option above for details.
 
     -h (-htmlFormat)
          Use HTML table formatting for output. Implies the -E option. The
@@ -1857,7 +1909,7 @@ OPTIONS
          dumped, but the -u option can be used to give a raw hex dump of
          other file formats.
 
-    -j[=*JSONFILE*] (-json)
+    -j[[+]=*JSONFILE*] (-json)
          Use JSON (JavaScript Object Notation) formatting for console
          output, or import JSON file if *JSONFILE* is specified. This option
          may be combined with -g to organize the output into objects by
@@ -1866,28 +1918,31 @@ OPTIONS
          default XMP structures are flattened into individual tags in the
          JSON output, but the original structure may be preserved with the
          -struct option (this also causes all list-type XMP tags to be
-         output as JSON arrays, otherwise single-item lists are output as
-         simple strings). The -a option is implied if the -g or -G options
-         are used, otherwise it is ignored and duplicate tags are
+         output as JSON arrays, otherwise single-item lists would be output
+         as simple strings). The -a option is implied if the -g or -G
+         options are used, otherwise it is ignored and duplicate tags are
          suppressed. Adding the -D or -H option changes tag values to JSON
          objects with "val" and "id" fields, and adding -l adds a "desc"
          field, and a "num" field if the numerical value is different from
          the converted "val". The -b option may be added to output binary
          data, encoded in base64 if necessary (indicated by "base64:" as the
-         first 7 bytes of the value). The JSON output is UTF-8 regardless of
-         any -L or -charset option setting, but the UTF-8 validation is
-         disabled if a character set other than UTF-8 is specified.
+         first 7 bytes of the value), and -t may be added to include tag
+         table information (see -t for details). The JSON output is UTF-8
+         regardless of any -L or -charset option setting, but the UTF-8
+         validation is disabled if a character set other than UTF-8 is
+         specified.
 
          If *JSONFILE* is specified, the file is imported and the tag
          definitions from the file are used to set tag values on a per-file
          basis. The special "SourceFile" entry in each JSON object
          associates the information with a specific target file. An object
          with a missing SourceFile or a SourceFile of "*" defines default
-         tags for all target files. The imported JSON file must have the
-         same format as the exported JSON files with the exception that the
-         -g option is not compatible with the import file format (use -G
-         instead). Additionally, tag names in the input JSON file may be
-         suffixed with a "#" to disable print conversion.
+         tags for all target files which are combined with any tags
+         specified for the specific SourceFile processed. The imported JSON
+         file must have the same format as the exported JSON files with the
+         exception that the -g option is not compatible with the import file
+         format (use -G instead). Additionally, tag names in the input JSON
+         file may be suffixed with a "#" to disable print conversion.
 
          Unlike CSV import, empty values are not ignored, and will cause an
          empty value to be written if supported by the specific metadata
@@ -1928,18 +1983,22 @@ OPTIONS
          add entries for other languages, zip this file, and email it to
          phil at owl.phy.queensu.ca for inclusion in ExifTool.
 
+         Note: ExifTool uses Unicode::LineBreak if available to help
+         preserve the column alignment of the plain text output for
+         languages with a variable-width character set.
+
     -listItem *INDEX*
          For list-type tags, this causes only the item with the specified
          index to be extracted. *INDEX* is 0 for the first item in the list.
          Negative indices may also be used to reference items from the end
          of the list. Has no effect on single-valued tags. Also applies to
-         tag values when copying, and in -if conditions.
+         tag values when copying from a tag, and in -if conditions.
 
     -n (--printConv)
-         Read and write values as numbers instead of words. By default,
-         extracted values are converted to a more human-readable format for
-         printing, but the -n option disables this print conversion for all
-         tags. For example:
+         Disable print conversion for all tags. By default, extracted values
+         are converted to a more human-readable format, but the -n option
+         disables this conversion, revealing the machine-readable values.
+         For example:
 
              &gt; exiftool -Orientation -S a.jpg
              Orientation: Rotate 90 CW
@@ -1962,18 +2021,23 @@ OPTIONS
              &gt; exiftool -Orientation#=6 a.jpg
 
     -p *FMTFILE* or *STR* (-printFormat)
-         Print output in the format specified by the given file or string
-         (and ignore other format options). Tag names in the format file or
-         string begin with a "$" symbol and may contain a leading group
-         names and/or a trailing "#". Case is not significant. Braces "{}"
-         may be used around the tag name to separate it from subsequent
-         text. Use $$ to represent a "$" symbol, and $/ for a newline.
-         Multiple -p options may be used, each contributing a line of text
-         to the output. Lines beginning with "#[HEAD]" and "#[TAIL]" are
-         output only for the first and last processed files respectively.
-         Lines beginning with "#[BODY]" and lines not beginning with "#" are
-         output for each processed file. Other lines beginning with "#" are
-         ignored. For example, this format file:
+         Print output in the format specified by the given file or string.
+         Tag names in the format file or string begin with a "$" symbol and
+         may contain a leading group names and/or a trailing "#". Case is
+         not significant. Braces "{}" may be used around the tag name to
+         separate it from subsequent text. Use $$ to represent a "$" symbol,
+         and $/ for a newline. Multiple -p options may be used, each
+         contributing a line of text to the output. Lines beginning with
+         "#[HEAD]" and "#[TAIL]" are output before the first processed file
+         and after the last processed file respectively. Lines beginning
+         with "#[SECT]" and "#[ENDS]" are output around each section of
+         files. A section is defined as a group of consecutive files with
+         the same section header (eg. files are grouped by directory if
+         "#[SECT]" contains $directory). Lines beginning with "#[BODY]" and
+         lines not beginning with "#" are output for each processed file.
+         Lines beginning with "#[IF]" are not output, but the BODY lines are
+         skipped if any tag on an IF line doesn't exist. Other lines
+         beginning with "#" are ignored. For example, this format file:
 
              # this is a comment line
              #[HEAD]-- Generated by ExifTool $exifToolVersion --
@@ -1987,12 +2051,16 @@ OPTIONS
 
          produces output like this:
 
-             -- Generated by ExifTool 10.11 --
+             -- Generated by ExifTool 10.80 --
              File: a.jpg - 2003:10:31 15:44:19
              (f/5.6, 1/60s, ISO 100)
              File: b.jpg - 2006:05:23 11:57:38
              (f/8.0, 1/13s, ISO 100)
              -- end --
+
+         The values of List-type tags with multiple items and Shortcut tags
+         representing multiple tags are joined according the the -sep option
+         setting when interpolated in the string.
 
          When -ee (-extractEmbedded) is combined with -p, embedded documents
          are effectively processed as separate input files.
@@ -2004,30 +2072,15 @@ OPTIONS
          -m option may be used to ignore minor warnings and leave the
          missing values empty.
 
-         An advanced formatting feature allows an arbitrary Perl expression
-         to be applied to the value of any tag by placing it inside the
-         braces after a semicolon following the tag name. The expression has
-         access to the value of this tag through the default input variable
-         ($_), and the full API through the current ExifTool object ($self).
-         It may contain any valid Perl code, including translation ("tr///")
-         and substitution ("s///") operations, but note that braces within
-         the expression must be balanced. The example below prints the
-         camera Make with spaces translated to underlines, and multiple
-         consecutive underlines replaced by a single underline:
-
-             exiftool -p "${make;tr/ /_/;s/__+/_/g}" image.jpg
-
-         A default expression of "tr(/\\?*:|"&lt;&gt;\0)()d" is assumed if the
-         expression is empty. This removes the characters / \ ? * : | &lt; &gt;
-         and null from the printed value. (These characters are illegal in
-         Windows file names, so this feature is useful if tag values are
-         used in file names.)
+         The "Advanced formatting feature" may be used to modify the values
+         of individual tags with the -p option.
 
     -php Format output as a PHP Array. The -g, -G, -D, -H, -l, -sep and
          -struct options combine with -php, and duplicate tags are handled
          in the same way as with the -json option. As well, the -b option
-         may be added to output binary data. Here is a simple example
-         showing how this could be used in a PHP script:
+         may be added to output binary data, and -t may be added to include
+         tag table information (see -t for details). Here is a simple
+         example showing how this could be used in a PHP script:
 
              &lt;?php
              eval('$array=' . `exiftool -php -q image.jpg`);
@@ -2061,6 +2114,14 @@ OPTIONS
          with no separator when reading, or split the value into individual
          characters when writing.
 
+         For pure binary output (-b used without -j, -php or -X), the first
+         -sep option specifies a list-item separator, and subsequent -sep
+         options specify a terminator added to the end of the list (or after
+         each value if not a list). In these strings, "\n", "\r" and "\t"
+         may be used to represent a newline, carriage return and tab
+         respectively. By default, binary list items are separated by a
+         newline, and no terminator is added.
+
     -sort, --sort
          Sort output by tag description, or by tag name if the -s option is
          used. When sorting by description, the sort order will depend on
@@ -2073,9 +2134,9 @@ OPTIONS
     -struct, --struct
          Output structured XMP information instead of flattening to
          individual tags. This option works well when combined with the XML
-         (-X) and JSON (-j) output formats. For other output formats, the
-         structures are serialized into the same format as when writing
-         structured information (see
+         (-X) and JSON (-j) output formats. For other output formats, XMP
+         structures and lists are serialized into the same format as when
+         writing structured information (see
          &lt;http://owl.phy.queensu.ca/~phil/exiftool/struct.html&gt; for
          details). When copying, structured tags are copied by default
          unless --struct is used to disable this feature (although flattened
@@ -2088,8 +2149,10 @@ OPTIONS
          Output a tab-delimited list of description/values (useful for
          database import). May be combined with -s to print tag names
          instead of descriptions, or -S to print tag values only,
-         tab-delimited on a single line. The -t option may also be used to
-         add tag table information to the -X option output.
+         tab-delimited on a single line. The -t option may be combined with
+         -j, -php or -X to add tag table information (table "name", decimal
+         tag "id", and "index" for cases where multiple conditional tags
+         exist with the same ID).
 
     -T (-table)
          Output tag values in table form. Equivalent to -t -S -q -f.
@@ -2123,26 +2186,32 @@ OPTIONS
              -w dir2/%d%f.txt  # write to "dir2", keeping dir structure
              -w a%c.txt        # write to "a.txt" or "a1.txt" or "a2.txt"...
 
-         Existing files will not be overwritten unless an exclamation point
-         is added to the option name (ie. -w! or -textOut!), or a plus sign
-         to append to the existing file (ie. -w+ or -textOut+). Both may be
-         used (ie. -w+! or -textOut+!) to overwrite output files that didn't
-         exist before the command was run, and append the output from
-         multiple source files. For example, to write one output file for
-         all source files in each directory:
+         Existing files will not be changed unless an exclamation point is
+         added to the option name (ie. -w! or -textOut!) to overwrite the
+         file, or a plus sign (ie. -w+ or -textOut+) to append to the
+         existing file. Both may be used (ie. -w+! or -textOut+!) to
+         overwrite output files that didn't exist before the command was
+         run, and append the output from multiple source files. For example,
+         to write one output file for all source files in each directory:
 
              exiftool -filename -createdate -T -w+! %d/out.txt -r DIR
+
+         Capitalized format codes %D, %F, %E and %C provide slightly
+         different alternatives to the lower case versions. %D does not
+         include the trailing '/', %F is the full filename including
+         extension, %E includes the leading '.', and %C increments the count
+         for each processed file (see below).
 
          Notes:
 
          1) In a Windows BAT file the "%" character is represented by "%%",
          so an argument like "%d%f.txt" is written as "%%d%%f.txt".
 
-         2) If the argument for -w does not contain a format code (%d, %f or
-         %e), then it is interpreted as a file extension. Therefore it is
-         not possible to specify a simple filename as an argument, so
-         creating a single output file from multiple source files is
-         typically done by shell redirection, ie)
+         2) If the argument for -w does not contain a valid format code (eg.
+         %f), then it is interpreted as a file extension. It is not possible
+         to specify a simple filename as an argument -- creating a single
+         output file from multiple source files is typically done by shell
+         redirection, ie)
 
              exiftool FILE1 FILE2 ... &gt; out.txt
 
@@ -2168,9 +2237,13 @@ OPTIONS
              Picture-123.jpg     %7f.%-3f            Picture.123
              Picture-123a.jpg    Meta%-3.1f.txt      Meta123.txt
 
-         For %d, the field width/position specifiers may be applied to the
-         directory levels instead of substring position by using a colon
-         instead of a decimal point in the format specifier. For example:
+         (Note that special characters may have a width of greater than
+         one.)
+
+         For %d and %D, the field width/position specifiers may be applied
+         to the directory levels instead of substring position by using a
+         colon instead of a decimal point in the format specifier. For
+         example:
 
              Source Dir     Format   Result       Notes
              ------------   ------   ----------   ------------------
@@ -2178,6 +2251,7 @@ OPTIONS
              pics/2012/02   %-:1d    pics/2012/   up one directory level
              pics/2012/02   %:1d     2012/02/     ignore top level
              pics/2012/02   %1:1d    2012/        take 1 level after top
+             pics/2012/02   %-1:D    02           bottom level folder name
              /Users/phil    %:2d     phil/        ignore top 2 levels
 
          (Note that the root directory counts as one level when an absolute
@@ -2217,17 +2291,18 @@ OPTIONS
          All format codes may be modified by 'l' or 'u' to specify lower or
          upper case respectively (ie. %le for a lower case file extension).
          When used to modify %c or %C, the numbers are changed to an
-         alphabetical base (see example H above). Also, %c may be modified
-         by 'n' to count using natural numbers starting from 1, instead of 0
-         (see example F above).
+         alphabetical base (see example H above). Also, %c and %C may be
+         modified by 'n' to count using natural numbers starting from 1,
+         instead of 0 (see example F above).
 
          This same *FMT* syntax is used with the -o and -tagsFromFile
-         options, although %c is only valid for output file names.
+         options, although %c and %C are only valid for output file names.
 
-    -W[!|+] *FMT* (-tagOut)
+    -W[+|!] *FMT* (-tagOut)
          This enhanced version of the -w option allows a separate output
-         file to be created for each extracted tag. The differences between
-         -W and -w are as follows:
+         file to be created for each extracted tag. See the -w option
+         documentation above for details of the basic functionality. Listed
+         here are the differences between -W and -w:
 
          1) With -W, a new output file is created for each extracted tag.
 
@@ -2254,7 +2329,7 @@ OPTIONS
 
          5) Individual list items are stored in separate files when -W is
          combined with -b, but note that for separate files to be created %c
-         must be used in *FMT* to give the files unique names.
+         or %C must be used in *FMT* to give the files unique names.
 
     -Wext *EXT*, --Wext *EXT* (-tagOutExt)
          This option is used to specify the type of output file(s) written
@@ -2283,9 +2358,7 @@ OPTIONS
          settings change the encoding only if there is a corresponding
          standard XML character set. The -b option causes binary data values
          to be written, encoded in base64 if necessary. The -t option adds
-         tag table information to the output (table "name", decimal tag
-         "id", and "index" for cases where multiple conditional tags exist
-         with the same ID).
+         tag table information to the output (see -t for details).
 
          Note: This output is NOT the same as XMP because it uses
          dynamically-generated property names corresponding to the ExifTool
@@ -2298,7 +2371,8 @@ OPTIONS
          Allow (-a) or suppress (--a) duplicate tag names to be extracted.
          By default, duplicate tags are suppressed unless the -ee or -X
          options are used or the Duplicates option is enabled in the
-         configuration file.
+         configuration file. This option also has an affect when writing to
+         allow duplicate Warning messages to be shown.
 
     -e (--composite)
          Extract existing tags only -- don't calculate composite tags.
@@ -2315,26 +2389,30 @@ OPTIONS
          this option may increase processing time substantially, especially
          for PDF files with many embedded images.
 
-    -ext *EXT*, --ext *EXT* (-extension)
+    -ext[+] *EXT*, --ext *EXT* (-extension)
          Process only files with (-ext) or without (--ext) a specified
-         extension. There may be multiple -ext and --ext options. Extensions
-         may begin with a leading '.', and case is not significant. For
-         example:
+         extension. There may be multiple -ext and --ext options. A plus
+         sign may be added (ie. -ext+) to add the specified extension to the
+         normally processed files. EXT may begin with a leading ".", which
+         is ignored. Case is not significant. "*" may be used to process
+         files with any extension (or none at all), as in the last three
+         examples:
 
-             exiftool -ext .JPG DIR            # process only JPG files
+             exiftool -ext JPG DIR             # process only JPG files
              exiftool --ext cr2 --ext dng DIR  # supported files but CR2/DNG
-             exiftool --ext . DIR              # ignore if no extension
+             exiftool -ext+ txt DIR            # supported files plus TXT
              exiftool -ext "*" DIR             # process all files
              exiftool -ext "*" --ext xml DIR   # process all but XML files
-
-         The extension may be "*" as in the last two examples above to force
-         processing files with any extension (not just supported files).
+             exiftool -ext "*" --ext . DIR     # all but those with no ext
 
          Using this option has two main advantages over specifying "*.*EXT*"
          on the command line: 1) It applies to files in subdirectories when
          combined with the -r option. 2) The -ext option is
          case-insensitive, which is useful when processing files on
          case-sensitive filesystems.
+
+         Note that all files specified on the command line will be processed
+         regardless of extension unless the -ext option is used.
 
     -F[*OFFSET*] (-fixBase)
          Fix the base for maker notes offsets. A common problem with some
@@ -2351,17 +2429,17 @@ OPTIONS
              exiftool -F -exif:resolutionunit=inches image.jpg
 
     -fast[*NUM*]
-         Increase speed of extracting information from JPEG images. With
-         this option, ExifTool will not scan to the end of a JPEG image to
-         check for an AFCP or PreviewImage trailer, or past the first
-         comment in GIF images or the audio/video data in WAV/AVI files to
-         search for additional metadata. These speed benefits are small when
-         reading images directly from disk, but can be substantial if piping
-         images through a network connection. For more substantial speed
-         benefits, -fast2 also causes exiftool to avoid extracting any EXIF
-         MakerNote information. -fast3 avoids processing the file entirely,
-         and returns only an initial guess at FileType and the pseudo System
-         tags.
+         Increase speed of extracting information. With this option,
+         ExifTool will not scan to the end of a JPEG image to check for an
+         AFCP or PreviewImage trailer, or past the first comment in GIF
+         images or the audio/video data in WAV/AVI files to search for
+         additional metadata. These speed benefits are small when reading
+         images directly from disk, but can be substantial if piping images
+         through a network connection. For more substantial speed benefits,
+         -fast2 also causes exiftool to avoid extracting any EXIF MakerNote
+         information. -fast3 avoids processing the file entirely, and
+         returns only an initial guess at FileType and the pseudo System
+         tags. Has no effect when writing.
 
     -fileOrder [-]*TAG*
          Set file processing order according to the sorted value of the
@@ -2442,6 +2520,10 @@ OPTIONS
          a group name (such as a family 4 instance number, eg. $Copy1:TAG,
          $Copy2:TAG, etc).
 
+         6) A special "OK" UserParam is available to test the success of the
+         previous command when -execute was used, and may be used like any
+         other tag in the condition (ie. "$OK").
+
     -m (-ignoreMinorErrors)
          Ignore minor errors and warnings. This enables writing to files
          with minor errors and disables some validation checks which could
@@ -2480,7 +2562,7 @@ OPTIONS
          of file. The following file types may be created using this
          technique:
 
-             XMP, ICC/ICM, MIE, VRD, DR4, EXIF, EXV
+             XMP, EXIF, EXV, MIE, ICC/ICM, VRD, DR4
 
          The output file type is determined by the extension of *OUTFILE*
          (specified as "-.EXT" when writing to stdout). The output file is
@@ -2504,23 +2586,25 @@ OPTIONS
          Similar to -overwrite_original except that an extra step is added
          to allow the original file attributes to be preserved. For example,
          on a Mac this causes the original file creation date, type,
-         creator, label color, icon, Finder tags and hard links to the file
-         to be preserved (but note that the Mac OS resource fork is always
-         preserved unless specifically deleted with "-rsrc:all="). This is
-         implemented by opening the original file in update mode and
-         replacing its data with a copy of a temporary file before deleting
-         the temporary. The extra step results in slower performance, so the
-         -overwrite_original option should be used instead unless necessary.
+         creator, label color, icon, Finder tags, other extended attributes
+         and hard links to the file to be preserved (but note that the Mac
+         OS resource fork is always preserved unless specifically deleted
+         with "-rsrc:all="). This is implemented by opening the original
+         file in update mode and replacing its data with a copy of a
+         temporary file before deleting the temporary. The extra step
+         results in slower performance, so the -overwrite_original option
+         should be used instead unless necessary.
 
     -P (-preserve)
-         Preserve the filesystem modification date/time of the original file
-         ("FileModifyDate") when writing. Note that some filesystems store a
-         creation date ("FileCreateDate") which is not affected by this
-         option. This creation date is preserved only on Windows systems
-         where Win32API::File and Win32::API are available. For other
+         Preserve the filesystem modification date/time ("FileModifyDate")
+         of the original file when writing. Note that some filesystems store
+         a creation date (Windows "FileCreateDate" or Mac
+         "MDItemFSCreationDate") which is not affected by this option. The
+         creation date is preserved on Windows systems where Win32API::File
+         and Win32::API are available regardless of this setting. For other
          systems, the -overwrite_original_in_place option may be used if
          necessary to preserve the creation date. This option is superseded
-         by writing FileModifyDate (and FileCreateDate) manually.
+         by any value written to the FileModifyDate tag.
 
     -password *PASSWD*
          Specify password to allow processing of password-protected PDF
@@ -2528,14 +2612,26 @@ OPTIONS
          issued and the document is not processed. This option is ignored if
          a password is not required.
 
-    -progress
-         Show file progress count in messages. The progress count appears in
-         brackets after the name of each processed file, and gives the
+    -progress[:[*TITLE*]]
+         Show the progress when processing files. The progress count appears
+         in brackets after the name of each processed file, and gives the
          current file number and the total number of files to be processed.
-         Implies the -v0 option, which prints the name of each processed
-         file when writing. When combined with the -if option, the total
-         count includes all files before the condition is applied, but files
-         that fail the condition will not have their names printed.
+         Implies the -v0 option if *TITLE* is not used, printing the name of
+         each processed file when writing. When combined with the -if
+         option, the total count includes all files before the condition is
+         applied, but files that fail the condition will not have their
+         names printed.
+
+         If followed by a colon (ie. -progress:), the console window title
+         is set according to the specified *TITLE* string. If no *TITLE* is
+         given, a default *TITLE* string of "ExifTool %p%%" is assumed. In
+         the string, %f represents the file name, %p is the progress as a
+         percent, %r is the progress as a ratio, %##b is a progress bar of
+         width "##" (20 characters if "##" is omitted), and %% is a %
+         character. May be combined with the normal -progress option to also
+         show the progress count in console messages. (Note: For this
+         feature to function correctly on Mac/Linux, stderr must go to the
+         console.)
 
     -q (-quiet)
          Quiet processing. One -q suppresses normal informational messages,
@@ -2550,6 +2646,8 @@ OPTIONS
          (ie. -r. or -recurse.). By default, exiftool will also follow
          symbolic links to directories if supported by the system, but this
          may be disabled with "-i SYMLINKS" (see the -i option for details).
+         Combine this with -ext options to control the types of files
+         processed.
 
     -scanForXMP
          Scan all files (even unsupported formats) for XMP information
@@ -2572,8 +2670,8 @@ OPTIONS
 
     -wm *MODE* (-writeMode)
          Set mode for writing/creating tags. *MODE* is a string of one or
-         more characters from the list below. Write mode is "wcg" unless
-         otherwise specified.
+         more characters from the list below. The default write mode is
+         "wcg".
 
              w - Write existing tags
              c - Create new tags
@@ -2589,12 +2687,13 @@ OPTIONS
 
     -z (-zip)
          When reading, causes information to be extracted from .gz and .bz2
-         compressed images. (Only one image per archive. Requires gzip and
-         bzip2 to be installed on the system.) When writing, causes
-         compressed information to be written if supported by the metadata
-         format. (eg. PNG supports compressed textual metadata.) This option
-         also disables the recommended padding in embedded XMP, saving 2424
-         bytes when writing XMP in a file.
+         compressed images (only one image per archive; requires gzip and
+         bzip2 to be available). When writing, causes compressed information
+         to be written if supported by the metadata format (eg. compressed
+         textual metadata in PNG), disables the recommended padding in
+         embedded XMP (saving 2424 bytes when writing XMP in a file), and
+         writes XMP in shorthand format -- the equivalent of setting the API
+         Compress, Compact and XMPShorthand options to 1.
 
    Other options
     -@ *ARGFILE*
@@ -2602,11 +2701,12 @@ OPTIONS
          contains one argument per line (NOT one option per line -- some
          options require additional arguments, and all arguments must be
          placed on separate lines). Blank lines and lines beginning with "#"
-         and are ignored. Normal shell processing of arguments is not
-         performed, which among other things means that arguments should not
-         be quoted and spaces are treated as any other character. *ARGFILE*
-         may exist relative to either the current directory or the exiftool
-         directory unless an absolute pathname is given.
+         are ignored. White space at the start of a line is removed. Normal
+         shell processing of arguments is not performed, which among other
+         things means that arguments should not be quoted and spaces are
+         treated as any other character. *ARGFILE* may exist relative to
+         either the current directory or the exiftool directory unless an
+         absolute pathname is given.
 
          For example, the following *ARGFILE* will set the value of
          Copyright to "Copyright YYYY, Phil Harvey", where "YYYY" is the
@@ -2615,6 +2715,11 @@ OPTIONS
              -d
              %Y
              -copyright&lt;Copyright $createdate, Phil Harvey
+
+         Arguments in *ARGFILE* behave exactly the same as if they were
+         entered at the location of the -@ option on the command line, with
+         the exception that the -config and -common_args options may not be
+         used in an *ARGFILE*.
 
     -k (-pause)
          Pause with the message "-- press any key --" before terminating.
@@ -2661,7 +2766,10 @@ OPTIONS
 
          Note that none of the -list options require an input *FILE*.
 
-    -ver Print exiftool version number.
+    -ver Print exiftool version number. The -v option may be added to print
+         addition system information (see the README file of the full
+         distribution for more details about optional libraries), or -v2 to
+         also list the Perl include directories.
 
    Special features
     -geotag *TRKFILE*
@@ -2670,11 +2778,12 @@ OPTIONS
          tag. After the -geotag option has been specified, the value of the
          "Geotime" tag is written to define a date/time for the position
          interpolation. If "Geotime" is not specified, the value is copied
-         from "DateTimeOriginal". For example, the following two commands
-         are equivalent:
+         from "DateTimeOriginal#" (the "#" is added to copy the unformatted
+         value, avoiding potential conflicts with the -d option). For
+         example, the following two commands are equivalent:
 
-             exiftool -geotag track.log image.jpg
-             exiftool -geotag "-Geotime&lt;DateTimeOriginal" image.jpg
+             exiftool -geotag trk.log image.jpg
+             exiftool -geotag trk.log "-Geotime&lt;DateTimeOriginal#" image.jpg
 
          When the "Geotime" value is converted to UTC, the local system
          timezone is assumed unless the date/time value contains a timezone.
@@ -2703,7 +2812,7 @@ OPTIONS
          See "geotag.html" in the full ExifTool distribution for more
          information.
 
-         Multiple -geotag options may be used to concatinate GPS track log
+         Multiple -geotag options may be used to concatenate GPS track log
          data. Also, a single -geotag option may be used to load multiple
          track log files by using wildcards in the *TRKFILE* name, but note
          that in this case *TRKFILE* must be quoted on most systems (with
@@ -2778,12 +2887,11 @@ OPTIONS
     improve performance in multi-pass processing by reducing the overhead
     required to load exiftool for each invocation.
 
-    -api *OPT[=VAL]*
+    -api *OPT[[^]=[VAL]]*
          Set ExifTool API option. *OPT* is an API option name. The option
-         value is set to 1 if *=VAL* is omitted, or undef if just *VAL* is
-         omitted. An option may not be set to an empty string ("") via the
-         command line, but the config file may be used to accomplish this if
-         necessary. See Image::ExifTool Options for a list of available API
+         value is set to 1 if *=VAL* is omitted. If *VAL* is omitted, the
+         option value is set to undef if "=" is used, or an empty string
+         with "^=". See Image::ExifTool Options for a list of available API
          options. This overrides API options set via the config file.
 
     -common_args
@@ -2796,25 +2904,30 @@ OPTIONS
     -config *CFGFILE*
          Load specified configuration file instead of the default
          ".ExifTool_config". If used, this option must come before all other
-         arguments on the command line. The *CFGFILE* name may contain a
-         directory specification (otherwise the file must exist in the
-         current directory), or may be set to an empty string ("") to
-         disable loading of the config file. See the sample configuration
-         file and "config.html" in the full ExifTool distribution for more
-         information about the ExifTool configuration file.
+         arguments on the command line and applies to all -execute'd
+         commands. The *CFGFILE* must exist relative to the current working
+         directory or the exiftool application directory unless an absolute
+         path is specified. Loading of the default config file may be
+         disabled by setting *CFGFILE* to an empty string (ie. ""). See
+         &lt;http://owl.phy.queensu.ca/~phil/exiftool/config.html&gt; and
+         config_files/example.config in the full ExifTool distribution for
+         details about the configuration file syntax.
 
     -echo[*NUM*] *TEXT*
-         Echo text to stdout (-echo or -echo1) or stderr (-echo2). Text is
+         Echo *TEXT* to stdout (-echo or -echo1) or stderr (-echo2). Text is
          output as the command line is parsed, before the processing of any
          input files. *NUM* may also be 3 or 4 to output text (to stdout or
          stderr respectively) after processing is complete.
 
     -execute[*NUM*]
          Execute command for all arguments up to this point on the command
-         line (plus any arguments specified by -common_args). Allows
-         multiple commands to be executed from a single command line. *NUM*
-         is an optional number that is echoed in the "{ready}" message when
-         using the -stay_open feature.
+         line (plus any arguments specified by -common_args). The result is
+         as if the commands were executed as separate command lines (with
+         the exception of the -config and -use options which remain in
+         effect for subsequent commands). Allows multiple commands to be
+         executed from a single command line. *NUM* is an optional number
+         that is echoed in the "{ready}" message when using the -stay_open
+         feature.
 
     -srcfile *FMT*
          Specify a different source file to be processed based on the name
@@ -2890,7 +3003,7 @@ OPTIONS
          via a pipe with "-@ -", so the signal is not necessary when using
          this technique.)
 
-    -userParam *PARAM[=VAL]*
+    -userParam *PARAM[[^]=[VAL]]*
          Set user parameter. *PARAM* is an arbitrary user parameter name.
          This is an interface to the API UserParam option (see the
          Image::ExifTool Options documentation), and provides a method to
@@ -2898,15 +3011,69 @@ OPTIONS
          if it were any other tag, see example below), and from
          PrintConv/ValueConv logic (via the ExifTool Options function).
          Similar to the -api option, the parameter value is set to 1 if
-         *=VAL* is omitted, or undef if just *VAL* is omitted.
+         *=VAL* is omitted, undef if just *VAL* is omitted and "=" is used,
+         or an empty string if *VAL* is omitted and "^=" is used.
 
              exiftool -p "$test from $filename" -userparam test=Hello FILE
 
+   Advanced formatting feature
+    An advanced formatting feature allows modification of the value of any
+    tag interpolated within a -if or -p option argument, or a -tagsFromFile
+    redirection string. Tag names within these strings are prefixed by a "$"
+    symbol, and an arbitrary Perl expression may be applied to the tag value
+    by placing braces around the tag name and inserting the expression after
+    the name, separated by a semicolon (ie. "${TAG;EXPR}"). The expression
+    acts on the value of the tag through the default input variable ($_),
+    and has access to the full ExifTool API through the current ExifTool
+    object ($self). It may contain any valid Perl code, including
+    translation ("tr///") and substitution ("s///") operations, but note
+    that braces within the expression must be balanced. The example below
+    prints the camera Make with spaces translated to underlines, and
+    multiple consecutive underlines replaced by a single underline:
+
+        exiftool -p "${make;tr/ /_/;s/__+/_/g}" image.jpg
+
+    A default expression of "tr(/\\?*:|"&lt;&gt;\0)()d" is assumed if the
+    expression is empty (ie. "${TAG;}"). This removes the characters / \ ? *
+    : | &lt; &gt; and null from the printed value. (These characters are illegal
+    in Windows file names, so this feature is useful if tag values are used
+    in file names.)
+
+    ExifTool provides a "DateFmt" utility to simplify reformatting of
+    individual date/time values. The function acts on a standard
+    EXIF-formatted date/time value in $_ and formats it according to the
+    specified format string (see the -d option). To avoid trying to reformat
+    an already formatted date/time value, a "#" must be added to the tag
+    name (as in the example below) if the -d option is also used. For
+    example:
+
+        exiftool -p "${createdate#;DateFmt('%Y-%m-%d_%H%M%S')}" a.jpg
+
+    A "NoDups" utility is also provided to remove duplicate items from a
+    list with a separator specified by the -sep option. This function is
+    most useful when copying list-type tags. For example, the following
+    command may be used to remove duplicate Keywords:
+
+        exiftool -sep "##" "-keywords&lt;${keywords;NoDups}" a.jpg
+
+    The -sep option is necessary to split the string back into individual
+    list items when writing to a list-type tag.
+
+    An optional flag argument may be set to 1 to cause "NoDups" to return
+    undef if no duplicates existed, thus preventing the file from being
+    rewritten unnecessarily:
+
+        exiftool -sep "##" "-keywords&lt;${keywords;NoDups(1)}" a.jpg
+
+    Note that function names are case sensitive.
+
 WINDOWS UNICODE FILE NAMES
-    In Windows, by default, file and directory names are specified on the
-    command line (or in arg files) using the system code page, which varies
-    with the system settings. Unfortunately, these code pages are not
-    complete character sets, so not all file names may be represented.
+    In Windows, command-line arguments are specified using the current code
+    page and are recoded automatically to the system code page. This
+    recoding is not done for arguments in ExifTool arg files, so by default
+    filenames in arg files use the system code page. Unfortunately, these
+    code pages are not complete character sets, so not all file names may be
+    represented.
 
     ExifTool 9.79 and later allow the file name encoding to be specified
     with "-charset filename=CHARSET", where "CHARSET" is the name of a valid
@@ -2916,7 +3083,14 @@ WINDOWS UNICODE FILE NAMES
     note that it is not trivial to pass properly encoded file names on the
     Windows command line (see
     &lt;http://owl.phy.queensu.ca/~phil/exiftool/faq.html#Q18&gt; for details), so
-    placing them in a UTF-8 encoded -@ argfile is recommended if possible.
+    placing them in a UTF-8 encoded -@ argfile and using "-charset
+    filename=utf8" is recommended if possible.
+
+    A warning is issued if a specified filename contains special characters
+    and the filename character set was not provided. However, the warning
+    may be disabled by setting "-charset filename=""", and ExifTool may
+    still function correctly if the system code page matches the character
+    set used for the file names.
 
     When a directory name is provided, the file name encoding need not be
     specified (unless the directory name contains special characters), and
@@ -2945,11 +3119,13 @@ WINDOWS UNICODE FILE NAMES
 WRITING READ-ONLY FILES
     In general, ExifTool may be used to write metadata to read-only files
     provided that the user has write permission in the directory. However,
-    there are two cases where file write permission is also required:
+    there are three cases where file write permission is also required:
 
     1) When using the -overwrite_original_in_place option.
 
-    2) On Windows if the file has Unicode characters in its name, and a) the
+    2) When writing only pseudo System tags (eg. FileModifyDate).
+
+    3) On Windows if the file has Unicode characters in its name, and a) the
     -overwrite_original option is used, or b) the "_original" backup already
     exists.
 
@@ -3177,10 +3353,10 @@ COPYING EXAMPLES
     exiftool -Tagsfromfile a.jpg out.xmp
          Copy meta information from "a.jpg" to an XMP data file. If the XMP
          data file "out.xmp" already exists, it will be updated with the new
-         information. Otherwise the XMP data file will be created. Only XMP,
-         ICC and MIE files may be created like this (other file types may be
-         edited but not created). See "WRITING EXAMPLES" above for another
-         technique to generate XMP files.
+         information. Otherwise the XMP data file will be created. Only
+         metadata-only files may be created like this (files containing
+         images may be edited but not created). See "WRITING EXAMPLES" above
+         for another technique to generate XMP files.
 
     exiftool -tagsFromFile a.jpg -XMP:All= -ThumbnailImage= -m b.jpg
          Copy all meta information from "a.jpg" to "b.jpg", deleting all XMP
@@ -3206,6 +3382,12 @@ COPYING EXAMPLES
     exiftool -TagsFromFile src.jpg "-xmp:all&lt;all" dst.jpg
          Copy all possible information from "src.jpg" and write in XMP
          format to "dst.jpg".
+
+    exiftool "-Description&lt;${FileName;s/\.[^.]*$//}" dir
+         Set the image Description from the file name after removing the
+         extension. This example uses the "Advanced formatting feature" to
+         perform a substitution operation to remove the last dot and
+         subsequent characters from the file name.
 
     exiftool -@ iptc2xmp.args -iptc:all= a.jpg
          Translate IPTC information to XMP with appropriate tag name
@@ -3244,9 +3426,9 @@ COPYING EXAMPLES
          except that the "-o" option will not write to an output file that
          already exists.
 
-    exiftool -if $jpgfromraw -b -jpgfromraw -w %d%f_%ue.jpg -execute -if
-    $previewimage -b -previewimage -w %d%f_%ue.jpg -execute -tagsfromfile @
-    -srcfile %d%f_%ue.jpg -overwrite_original -common_args --ext jpg DIR
+    exiftool -b -jpgfromraw -w %d%f_%ue.jpg -execute -b -previewimage -w
+    %d%f_%ue.jpg -execute -tagsfromfile @ -srcfile %d%f_%ue.jpg
+    -overwrite_original -common_args --ext jpg DIR
          [Advanced] Extract JpgFromRaw or PreviewImage from all but JPG
          files in DIR, saving them with file names like "image_EXT.jpg",
          then add all meta information from the original files to the
@@ -3294,8 +3476,8 @@ RENAMING EXAMPLES
          Rename all files in "dir" by adding the camera model name to the
          file name. The semicolon after the tag name inside the braces
          causes characters which are invalid in Windows file names to be
-         deleted from the tag value (see the -p option documentation for an
-         explanation).
+         deleted from the tag value (see the "Advanced formatting feature"
+         for an explanation).
 
     exiftool "-FileName&lt;CreateDate" -d %Y%m%d_%H%M%S%%-c.%%e dir
          Rename all images in "dir" according to the "CreateDate" date and
@@ -3330,15 +3512,11 @@ GEOTAGGING EXAMPLES
          is assumed unless DateTimeOriginal contains a timezone.
 
     exiftool -geotag t.log -geotime="2009:04:02 13:41:12-05:00" a.jpg
-         Geotag an image with the GPS position for a specific time. (Note
-         that the "Geotag" tag must be assigned before "Geotime" for the GPS
-         data to be available when "Geotime" is set.)
+         Geotag an image with the GPS position for a specific time.
 
     exiftool -geotag log.gpx "-xmp:geotime&lt;createdate" dir
          Geotag all images in directory "dir" with XMP tags instead of EXIF
-         tags, based on the image CreateDate. (In this case, the order of
-         the arguments doesn't matter because tags with values copied from
-         other tags are always set after constant values.)
+         tags, based on the image CreateDate.
 
     exiftool -geotag a.log -geosync=-20 dir
          Geotag images in directory "dir", accounting for image timestamps
@@ -3401,13 +3579,13 @@ PIPING EXAMPLES
          want to do this I don't know, but I've included this as an example
          to illustrate the flexibility of ExifTool.)
 
-DIAGNOSTICS
+EXIT STATUS
     The exiftool application exits with a status of 0 on success, or 1 if an
-    error occurred or if all files failed the -if condition (for any of the
-    commands if -execute was used).
+    error occurred, or 2 if all files failed the -if condition (for any of
+    the commands if -execute was used).
 
 AUTHOR
-    Copyright 2003-2016, Phil Harvey
+    Copyright 2003-2018, Phil Harvey
 
     This is free software; you can redistribute it and/or modify it under
     the same terms as Perl itself.
@@ -3415,5 +3593,6 @@ AUTHOR
 SEE ALSO
     Image::ExifTool(3pm), Image::ExifTool::TagNames(3pm),
     Image::ExifTool::Shortcuts(3pm), Image::ExifTool::Shift.pl
+
 
 </pre>
