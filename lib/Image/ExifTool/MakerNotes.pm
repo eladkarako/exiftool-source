@@ -22,7 +22,7 @@ sub ProcessKodakPatch($$$);
 sub WriteUnknownOrPreview($$$);
 sub FixLeicaBase($$;$);
 
-$VERSION = '2.00';
+$VERSION = '2.01';
 
 my $debug;          # set to 1 to enable debugging code
 
@@ -794,6 +794,14 @@ my $debug;          # set to 1 to enable debugging code
         },
         SubDirectory => {
             TagTable => 'Image::ExifTool::Reconyx::Main',
+            ByteOrder => 'Little-endian',
+        },
+    },
+    {
+        Name => 'MakerNoteReconyx2',
+        Condition => '$$valPt =~ /^RECONYXUF\0/',
+        SubDirectory => {
+            TagTable => 'Image::ExifTool::Reconyx::Type2',
             ByteOrder => 'Little-endian',
         },
     },
@@ -1718,4 +1726,4 @@ sub ProcessUnknown($$$)
 
 __END__
 
-#line 1746
+#line 1754

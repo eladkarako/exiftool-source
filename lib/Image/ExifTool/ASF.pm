@@ -18,7 +18,7 @@ use Image::ExifTool qw(:DataAccess :Utils);
 use Image::ExifTool::Exif;
 use Image::ExifTool::RIFF;
 
-$VERSION = '1.23';
+$VERSION = '1.24';
 
 sub ProcessASF($$;$);
 sub ProcessContentDescription($$$);
@@ -381,8 +381,10 @@ my %advancedContentEncryption = (
     },
     32 => { Name => 'DataPackets',  Format => 'int64u' },
     40 => {
-        Name => 'PlayDuration',
+        Name => 'Duration',
         Format => 'int64u',
+        Notes => 'called PlayDuration by the ASF spec',
+        Priority => 0,
         ValueConv => '$val / 1e7',
         PrintConv => 'ConvertDuration($val)',
     },
@@ -848,5 +850,5 @@ sub ProcessASF($$;$)
 
 __END__
 
-#line 885
+#line 887
 

@@ -40,7 +40,7 @@ use Image::ExifTool qw(:DataAccess :Utils);
 use Image::ExifTool::Exif;
 use Image::ExifTool::APP12;
 
-$VERSION = '2.51';
+$VERSION = '2.53';
 
 sub PrintLensInfo($$$);
 
@@ -405,6 +405,7 @@ my %olympusCameraTypes = (
     S0065 => 'E-PL8',
     S0067 => 'E-M1MarkII',
     S0068 => 'E-M10MarkIII',
+    S0076 => 'E-PL9', #IB
     SR45 => 'D220',
     SR55 => 'D320L',
     SR83 => 'D340L',
@@ -2417,6 +2418,8 @@ my %indexInfo = (
                     1 => 'WB',
                     2 => 'FL',
                     3 => 'MF',
+                    4 => 'ISO', #forum8906
+                    5 => 'AE Auto', #forum8906
                     6 => 'Focus', #PH
                 }) . ' Bracketing';
                 $a =~ s/, /+/g;
@@ -2478,6 +2481,8 @@ my %indexInfo = (
         Count => 2,
         PrintConv => {
             '0 0' => 'No',
+            '5 4' => 'HDR1', #forum8906
+            '6 4' => 'HDR2', #forum8906
             #'8 8' - seen this for the E-M1mkII
             '9 8' => 'Focus-stacked (8 images)',
         },
@@ -3959,4 +3964,4 @@ sub ProcessORF($$)
 
 __END__
 
-#line 4008
+#line 4013

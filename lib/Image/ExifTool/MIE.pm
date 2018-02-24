@@ -978,7 +978,7 @@ sub WriteMIEGroup($$$)
             if ($tagLen) {
                 $raf->Read($tag, $tagLen) == $tagLen or last;
                 $oldHdr .= $tag;    # add tag to element header
-                $et->Warn("MIE tag '$tag' out of sequence") if $tag lt $lastTag;
+                $et->Warn("MIE tag '${tag}' out of sequence") if $tag lt $lastTag;
                 # separate units from tag name if they exist
                 $units = $1 if $tag =~ s/\((.*)\)$//;
             } else {
@@ -1036,7 +1036,7 @@ sub WriteMIEGroup($$$)
                 if ($newTag eq $tag) {
                     # make sure that either both or neither old and new tags are MIE groups
                     if ($isMieGroup xor ($format & 0xf3) == 0x10) {
-                        $et->Warn("Tag '$tag' not expected type");
+                        $et->Warn("Tag '${tag}' not expected type");
                         next;   # don't write our new tag
                     }
                     # uncompress existing directory into $oldVal since we are editing it
@@ -1270,7 +1270,7 @@ sub WriteMIEGroup($$$)
                 }
                 $newFormat = $mieCode{$writable};
                 unless (defined $newFormat) {
-                    $msg = "Bad format '$writable' for $$newInfo{Name}";
+                    $msg = "Bad format '${writable}' for $$newInfo{Name}";
                     next MieElement;
                 }
             }
@@ -1479,7 +1479,7 @@ sub ProcessMIEGroup($$$)
         my ($tag, $units);
         if ($tagLen) {
             $raf->Read($tag, $tagLen) == $tagLen or last;
-            $et->Warn("MIE tag '$tag' out of sequence") if $tag lt $lastTag;
+            $et->Warn("MIE tag '${tag}' out of sequence") if $tag lt $lastTag;
             $lastTag = $tag;
             # separate units from tag name if they exist
             $units = $1 if $tag =~ s/\((.*)\)$//;
@@ -1539,7 +1539,7 @@ sub ProcessMIEGroup($$$)
             $raf->Read($value, $valLen) == $valLen or last;
             if ($format & 0x04) {
                 if ($verbose) {
-                    print $out "$$et{INDENT}\[Tag '$tag' $valLen bytes compressed]\n";
+                    print $out "$$et{INDENT}\[Tag '${tag}' $valLen bytes compressed]\n";
                 }
                 next unless HasZlib($et, 'decode');
                 my $stat;
