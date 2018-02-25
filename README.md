@@ -1,4 +1,4 @@
-<h1><img width="48" height="48" src="icon.png"/> exiftool-source</h2>
+<h1><img width="48" height="48" src="icon.png"/> exiftool-source</h1>
 <h2>exiftool (<code>v10.80</code>, <sub>last updated: February 22<sup><em>nd</em></sup>, 2018</sub>) is a collection of Perl scripts and LIBs, a.k.a distributed as a <code>PAR::Packer</code> execute-file for Windows (and internally, it uses <code>Active Perl</code>), if you're interested to see the source you can simply extract it with 7zip. This is what inside the latest version.</h2>
 
 <hr/>
