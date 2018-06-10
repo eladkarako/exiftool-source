@@ -35,7 +35,7 @@ use Image::ExifTool::Nikon;
 use Image::ExifTool::Validate;
 use Image::ExifTool::MacOS;
 
-$VERSION = '3.15';
+$VERSION = '3.16';
 @ISA = qw(Exporter);
 
 sub NumbersFirst($$);
@@ -2134,6 +2134,7 @@ sub WriteTagNames($$)
                 my $ns = $Image::ExifTool::XMP::stdXlatNS{$$table{NAMESPACE}} || $$table{NAMESPACE};
                 my $msg = "These tags belong to the ExifTool XMP-$ns family 1 group.";
                 if ($notes) {
+                    $notes =~ s/\s+$//;
                     $notes .= "\n\n" . $msg;
                 } else {
                     $notes = $msg;
@@ -2531,4 +2532,4 @@ sub WriteTagNames($$)
 
 __END__
 
-#line 2600
+#line 2601

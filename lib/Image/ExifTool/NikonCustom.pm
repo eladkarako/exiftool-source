@@ -16,7 +16,7 @@ package Image::ExifTool::NikonCustom;
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '1.15';
+$VERSION = '1.16';
 
 # custom settings for the D80 (encrypted) - ref JD
 %Image::ExifTool::NikonCustom::SettingsD80 = (
@@ -6599,7 +6599,7 @@ $VERSION = '1.15';
             0x40 => '0.5 s',          #new with the D850
             0x60 => '1 s',
             0x80 => '2 s',
-            0xc0 => '3 s',
+            0xa0 => '3 s',
         },
     },
     11.2 => { # CSd1

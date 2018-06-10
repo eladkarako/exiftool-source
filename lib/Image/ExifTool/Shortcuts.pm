@@ -20,7 +20,7 @@ package Image::ExifTool::Shortcuts;
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '1.58';
+$VERSION = '1.60';
 
 # this is a special table used to define command-line shortcuts
 # (documentation Notes may be added for these via %shortcutNotes in BuildTagLookup.pm)
@@ -146,6 +146,7 @@ $VERSION = '1.58';
         'MakerNoteKodak9',
         'MakerNoteKodak10',
         'MakerNoteKodak11',
+        'MakerNoteKodak12',
         'MakerNoteKodakUnknown',
         'MakerNoteKyocera',
         'MakerNoteMinolta',
@@ -169,6 +170,7 @@ $VERSION = '1.58';
         'MakerNoteLeica9',
         'MakerNotePanasonic',
         'MakerNotePanasonic2',
+        'MakerNotePanasonic3',
         'MakerNotePentax',
         'MakerNotePentax2',
         'MakerNotePentax3',
@@ -291,4 +293,4 @@ if (%Image::ExifTool::UserDefined::Shortcuts) {
 
 __END__
 
-#line 340
+#line 342

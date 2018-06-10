@@ -1312,10 +1312,7 @@ sub ProcessMeasInfo($$$)
         last if $recLen < 0x28 or $pos + $recLen > $dirEnd;
         my $pre = 'Meas' . $i;
         $et->VerboseDir("MeasInfo $i", undef, $recLen);
-        if ($verbose > 2) {
-            HexDump($dataPt, $recLen,
-                Start=>$pos, Prefix=>$$et{INDENT}, DataPos=>$dataPos);
-        }
+        $et->VerboseDump($dataPt, Len => $recLen, Start=>$pos, DataPos=>$dataPos);
         my $coordLen = Get16u($dataPt, $pos+4);
         # generate tag table entries for this tool if necessary
         foreach $t ('Type', 'Params', 'Label') {
@@ -1449,9 +1446,7 @@ sub ProcessFLIR($$;$)
                 Size    => $recLen,
             );
         } elsif ($verbose > 2) {
-            my %parms = ( DataPos => $recPos, Prefix => $$et{INDENT} );
-            $parms{MaxLen} = 96 if $verbose < 4;
-            HexDump(\$rec, $recLen, %parms);
+            $et->VerboseDump(\$rec, Len => $recLen, DataPos => $recPos);
         }
     }
     delete $$et{SET_GROUP0};
@@ -1485,4 +1480,4 @@ sub ProcessFPF($$)
 
 __END__
 
-#line 1536
+#line 1531

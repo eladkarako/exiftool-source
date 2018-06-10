@@ -21,7 +21,7 @@ use strict;
 use vars qw($VERSION);
 use Image::ExifTool qw(:DataAccess :Utils);
 
-$VERSION = '1.14';
+$VERSION = '1.15';
 
 # road map of directory locations in GIF images
 my %gifMap = (
@@ -322,9 +322,7 @@ Block:
             my $comment = '';
             while ($length) {
                 last unless $raf->Read($buff, $length) == $length;
-                if ($verbose > 2 and not $outfile) {
-                    HexDump(\$buff, undef, Out => $out);
-                }
+                $et->VerboseDump(\$buff) unless $outfile;
                 # add buffer to comment string
                 $comment .= $buff;
                 last unless $raf->Read($ch, 1);  # read next block header
@@ -520,4 +518,4 @@ Block:
 
 __END__
 
-#line 563
+#line 561

@@ -26,7 +26,7 @@ use Image::ExifTool qw(:DataAccess :Utils);
 use Image::ExifTool::Exif;
 use Image::ExifTool::GPS;
 
-$VERSION = '1.15';
+$VERSION = '1.16';
 
 sub ProcessSEI($$);
 
@@ -1056,9 +1056,7 @@ sub ParseH264Video($$)
         $buff .= substr($$dataPt, $pos, $end - $pos);
         if ($verbose > 1) {
             printf $out "  NAL Unit Type: 0x%x (%d bytes)\n",$nal_unit_type, length $buff;
-            my %parms = ( Out => $out );
-            $parms{MaxLen} = 96 if $verbose < 4;
-            HexDump(\$buff, undef, %parms) if $verbose > 2;
+            $et->VerboseDump(\$buff);
         }
         pos($$dataPt) = $pos = $nextPos;
 
@@ -1096,5 +1094,5 @@ sub ParseH264Video($$)
 
 __END__
 
-#line 1136
+#line 1134
 

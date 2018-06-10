@@ -15,7 +15,7 @@ use Image::ExifTool qw(:DataAccess :Utils);
 use Image::ExifTool::Exif;
 use Image::ExifTool::GPS;
 
-$VERSION = '1.46';
+$VERSION = '1.47';
 
 sub ProcessMIE($$);
 sub ProcessMIEGroup($$$);
@@ -152,6 +152,9 @@ my %offOn = ( 0 => 'Off', 1 => 'On' );
         these tags, units may be added in brackets immediately following the value
         (eg. C<55(mi/h)>).  If no units are specified, the default units are
         written.
+
+        4) ExifTool writes compressed metadata to MIE files if the Compress (-z)
+        option is used and Compress::Zlib is available.
 
         See L<http://owl.phy.queensu.ca/~phil/exiftool/MIE1.1-20070121.pdf> for the
         official MIE specification.
@@ -1123,6 +1126,7 @@ sub WriteMIEGroup($$$)
                             eval { require Compress::Zlib })
                         {
                             $subdirInfo{Compact} = 1;
+                            $subdirInfo{ReadOnly} = 1;  # because XMP is not writable in place
                         }
                     }
                     $subdirInfo{Parent} = $dirName;
@@ -1604,7 +1608,7 @@ sub ProcessMIEGroup($$$)
                     }
                     $et->VerboseInfo($lastTag, $tagInfo,
                         DataPt  => \$value,
-                        DataPos => $raf->Tell() - $valLen,
+                        DataPos => $wasCompressed ? undef : $raf->Tell() - $valLen,
                         Size    => $valLen,
                         Format  => $formatStr,
                         Value   => $val,
@@ -1827,5 +1831,5 @@ sub ProcessMIE($$)
 
 __END__
 
-#line 2564
+#line 2568
 

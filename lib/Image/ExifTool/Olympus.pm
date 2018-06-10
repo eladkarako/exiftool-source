@@ -40,7 +40,7 @@ use Image::ExifTool qw(:DataAccess :Utils);
 use Image::ExifTool::Exif;
 use Image::ExifTool::APP12;
 
-$VERSION = '2.53';
+$VERSION = '2.54';
 
 sub PrintLensInfo($$$);
 
@@ -124,6 +124,7 @@ my %olympusLensTypes = (
     '1 06 00' => 'Sigma APO 50-500mm F4.0-6.3 EX DG HSM', #6
     '1 06 10' => 'Sigma 30mm F1.4 DC DN | C', #NJ
     '1 07 00' => 'Sigma Macro 105mm F2.8 EX DG', #PH
+    '1 07 10' => 'Sigma 16mm F1.4 DC DN | C (017)', #IB
     '1 08 00' => 'Sigma APO Macro 150mm F2.8 EX DG HSM', #PH
     '1 09 00' => 'Sigma 18-50mm F2.8 EX DC Macro', #NJ
     '1 10 00' => 'Sigma 24mm F1.8 EX DG Aspherical Macro', #PH
@@ -3964,4 +3965,4 @@ sub ProcessORF($$)
 
 __END__
 
-#line 4013
+#line 4014
